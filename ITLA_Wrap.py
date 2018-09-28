@@ -86,7 +86,7 @@ seriallock=0
 
 class ITLA_Class:
 	def __init__(self,port,baudrate):
-		self.sercon = self.ITLAConnect(self,port,baudrate)
+            self.sercon = self.ITLAConnect(port,baudrate)
 
 	def stripString(self,input):
 		outp=''
@@ -145,7 +145,7 @@ class ITLA_Class:
 			byte1=0xFF
 			byte2=0xFF
 			byte3=0xFF
-		if checksum(byte0,byte1,byte2,byte3)==byte0>>4:
+		if self.checksum(byte0,byte1,byte2,byte3)==byte0>>4:
 			_error=byte0&0x03
 			return(byte0,byte1,byte2,byte3)
 		else:
@@ -175,8 +175,8 @@ class ITLA_Class:
 			return(ITLA_ERROR_SERPORT)
 		baudrate2=4800
 		while baudrate2<115200:
-			ITLA(conn,REG_Nop,0,0)
-			if ITLALastError()<>ITLA_NOERROR:
+			self.ITLA(conn,REG_Nop,0,0)
+			if self.ITLALastError()<>ITLA_NOERROR:
 				#go to next baudrate
 				if baudrate2==4800:baudrate2=9600
 				elif baudrate2==9600: baudrate2=19200
@@ -210,8 +210,8 @@ class ITLA_Class:
 			byte2=int(data/256)
 			byte3=int(data-byte2*256)
 			latestregister=register
-			Send_command(sercon,int(checksum(0,register,byte2,byte3))*16,register,byte2,byte3)
-			test=Receive_response(sercon)
+			self.Send_command(sercon,int(self.checksum(0,register,byte2,byte3))*16,register,byte2,byte3)
+			test=self.Receive_response(sercon)
 			b0=test[0]
 			b1=test[1]
 			b2=test[2]
@@ -229,8 +229,8 @@ class ITLA_Class:
 		else:
 			byte2=int(data/256)
 			byte3=int(data-byte2*256)
-			Send_command(sercon,int(checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
-			test=Receive_response(sercon)
+			self.Send_command(sercon,int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
+			test=self.Receive_response(sercon)
 			lock.acquire()
 			queue.pop(0)
 			lock.release()
@@ -248,21 +248,21 @@ class ITLA_Class:
 		SerialLockSet()
 		if rw==0:
 			latestregister=register
-			Send_command(sercon,int(checksum(0,register,0,0))*16,register,0,0)
+			self.Send_command(sercon,int(self.checksum(0,register,0,0))*16,register,0,0)
 			Receive_simple_response(sercon)
 			SerialLockUnSet()
 		else:
 			byte2=int(data/256)
 			byte3=int(data-byte2*256)
-			Send_command(sercon,int(checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
+			self.Send_command(sercon,int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
 			Receive_simple_response(sercon)
 			SerialLockUnSet()
          
 	def AEA(self,sercon,bytes):
 		outp=''
 		while bytes>0:
-			Send_command(sercon,int(checksum(0,REG_AeaEar,0,0))*16,REG_AeaEar,0,0)
-			test=Receive_response(sercon)
+			self.Send_command(sercon,int(self.checksum(0,REG_AeaEar,0,0))*16,REG_AeaEar,0,0)
+			test=self.Receive_response(sercon)
 			outp=outp+chr(test[2])
 			outp=outp+chr(test[3])
 			bytes=bytes-2
@@ -358,18 +358,18 @@ class ITLA_Class:
 
 	def ProbeLaser(self):
 		#Apparently when you write zeroes to the laser, it should have a specific repsonse. It's a decent test to see if the laser is behaving.
-		Send_command(self.sercon,0x00,0x00,0x00,0x00)
-		response = Receive_response(self.sercon)
+		self.Send_command(self.sercon,0x00,0x00,0x00,0x00)
+		response = self.Receive_response(self.sercon)
 		if response != (84, 0, 0, 16):
 			print('Laser is not behaving! Turning the laser off...')
-			EnableLaser(self.sercon,False)
+			self.EnableLaser(self.sercon,False)
 			sys.exit()
 
 	def SendReceive(self,readwrite,register,byte2,byte3):
-		#This SendReceive command should be all you need if you want to manually address a known register
+		#This self.SendReceive command should be all you need if you want to manually address a known register
 		#Bytes 2 and 3 contain the number value
-		Send_command(self.sercon,*CommandWithChecksum(readwrite,register,byte2,byte3))
-		byte0, byte1, byte2, byte3 = Receive_response(self.sercon)
+		self.Send_command(self.sercon,*self.CommandWithChecksum(readwrite,register,byte2,byte3))
+		byte0, byte1, byte2, byte3 = self.Receive_response(self.sercon)
 		response = (byte2 << 8) + byte3
 		return response
 
@@ -380,7 +380,7 @@ class ITLA_Class:
 		print(HexList)
 
 	def CommandWithChecksum(self,byte0,byte1,byte2,byte3):
-		newbyte0 = (checksum(byte0,byte1,byte2,byte3)<<4) + byte0
+		newbyte0 = (self.checksum(byte0,byte1,byte2,byte3)<<4) + byte0
 		return newbyte0, byte1, byte2, byte3
 
 	##############################################################################################################
@@ -394,17 +394,17 @@ class ITLA_Class:
 		freqTHz = int(freq)
 		THzbyte3 = freqTHz&0xff
 		THzbyte2 = (freqTHz&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Fcf1,THzbyte2,THzbyte3)
+		self.SendReceive(WRITE,REG_Fcf1,THzbyte2,THzbyte3)
 
 		#Set GHz register
 		freqGHz = int((freq-freqTHz)*10000)
 		GHzbyte3 = freqGHz&0xff
 		GHzbyte2 = (freqGHz&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Fcf2,GHzbyte2,GHzbyte3)
+		self.SendReceive(WRITE,REG_Fcf2,GHzbyte2,GHzbyte3)
 		
 		#Check what frequency is now set to
-		THz = SendReceive(self.sercon,READ,REG_Fcf1,0,0)
-		GHz = SendReceive(self.sercon,READ,REG_Fcf2,0,0)
+		THz = self.SendReceive(READ,REG_Fcf1,0,0)
+		GHz = self.SendReceive(READ,REG_Fcf2,0,0)
 		if THz == freqTHz and GHz == freqGHz:
 			print('Frequency set to ' + str(freqTHz) + '.' + str(freqGHz) + ' THz')
 			logging.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
@@ -418,17 +418,17 @@ class ITLA_Class:
 		freqTHz = int(freq)
 		THzbyte3 = freqTHz&0xff
 		THzbyte2 = (freqTHz&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Fcf1,THzbyte2,THzbyte3)
+		self.SendReceive(WRITE,REG_Fcf1,THzbyte2,THzbyte3)
 
 		#Set GHz register
 		freqGHz = int(round((freq-freqTHz)*10000.0))
 		GHzbyte3 = freqGHz&0xff
 		GHzbyte2 = (freqGHz&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Fcf2,GHzbyte2,GHzbyte3)
+		self.SendReceive(WRITE,REG_Fcf2,GHzbyte2,GHzbyte3)
 		
 		#Check what frequency is now set to
-		THz = SendReceive(self.sercon,READ,REG_Fcf1,0,0)
-		GHz = SendReceive(self.sercon,READ,REG_Fcf2,0,0)
+		THz = self.SendReceive(READ,REG_Fcf1,0,0)
+		GHz = self.SendReceive(READ,REG_Fcf2,0,0)
 		if THz == freqTHz and GHz == freqGHz:
 			print('Frequency set to ' + str(freqTHz) + '.' + str(freqGHz) + ' THz')
 			logging.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
@@ -440,19 +440,19 @@ class ITLA_Class:
 		#Specify power in dBm
 		byte3 = power&0xff
 		byte2 = (power&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Power,byte2,byte3)
+		self.SendReceive(WRITE,REG_Power,byte2,byte3)
 		logging.info("Laser power set to " + str(power) + " dBm")
 
 	def EnableLaser(self,state):
 		if state == True:
 			logging.info("Turning on laser...")
-			SendReceive(self.sercon,WRITE,REG_Resena,0x00,0x08)
+			self.SendReceive(WRITE,REG_Resena,0x00,0x08)
 			print('Please wait, laser is turning on...')
-			WaitForLaser(self.sercon)
+			self.WaitForLaser()
 			logging.info("Laser is on")
 			print('Laser is on')
 		else:
-			SendReceive(self.sercon,WRITE,REG_Resena,0x00,0x00)
+			self.SendReceive(WRITE,REG_Resena,0x00,0x00)
 			logging.info("Laser disabled")
 			print('Laser is off')
 
@@ -461,18 +461,18 @@ class ITLA_Class:
 		#This function is called when you enable the laser. You might want to use it when using the fine-tune frequency feature
 		pending = 1
 		while pending:
-			Send_command(self.sercon,0x00,0x00,0x00,0x00)
-			pending = Receive_response(self.sercon)[2]
+			self.Send_command(self.sercon,0x00,0x00,0x00,0x00)
+			pending = self.Receive_response(self.sercon)[2]
 			time.sleep(0.5)
 
 	def EnableWhisperMode(self,state):
 		if state == True:
-			SendReceive(self.sercon,WRITE,REG_Mode,0x00,0x02)
+			self.SendReceive(WRITE,REG_Mode,0x00,0x02)
 			print("Whisper mode enabled")
 			logging.info("Whisper mode enabled")
 			time.sleep(0.5)
 		else:
-			SendReceive(self.sercon,WRITE,REG_Mode,0x00,0x00)
+			self.SendReceive(WRITE,REG_Mode,0x00,0x00)
 			print("Whisper mode disabled")
 			logging.info("Whisper mode disabled")
 			time.sleep(0.5)
@@ -485,30 +485,30 @@ class ITLA_Class:
 		#Specify range in GHz
 		byte3 = range&0xff
 		byte2 = (range&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Csweepamp,byte2,byte3)
+		self.SendReceive(WRITE,REG_Csweepamp,byte2,byte3)
 		logging.info("Sweep range set to " + str(range) + " GHz")
 
 	def SetSweepRate(self,rate):
 		#Specify range in MHz/s
 		byte3 = rate&0xff
 		byte2 = (rate&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Cscanf1,byte2,byte3)
+		self.SendReceive(WRITE,REG_Cscanf1,byte2,byte3)
 		logging.info("Sweep rate set to " + str(rate) + " MHz/s")
 
 	def EnableSweep(self,state):
 		if state == True:
-			SendReceive(self.sercon,WRITE,REG_Csweepsena,0x00,0x01)
+			self.SendReceive(WRITE,REG_Csweepsena,0x00,0x01)
 			logging.info("Laser sweep enabled")
 			print("Sweep enabled")
 		else:
-			SendReceive(self.sercon,WRITE,REG_Csweepsena,0x00,0x00)
+			self.SendReceive(WRITE,REG_Csweepsena,0x00,0x00)
 			logging.info("Laser sweep disabled")
 			print("Sweep disabled")
 
 	def ReadOffsetFreq(self):
 		#Reads the current frequency offset of the sweep in GHz
 		#Can be buggy if you don't have a small delay between starting sweep and using this function
-		data = SendReceive(self.sercon,READ,REG_Csweepoffset,0x00,0x00)
+		data = self.SendReceive(READ,REG_Csweepoffset,0x00,0x00)
 		if data > 65535/2:
 			data = (data - 65535)*0.1
 		return data
@@ -522,13 +522,13 @@ class ITLA_Class:
 		freqTHz = int(freq)
 		THzbyte3 = freqTHz&0xff
 		THzbyte2 = (freqTHz&0xff00)>>8
-		dataTHz = SendReceive(self.sercon,WRITE,REG_CjumpTHz,THzbyte2,THzbyte3)
+		dataTHz = self.SendReceive(WRITE,REG_CjumpTHz,THzbyte2,THzbyte3)
 		
 		#Set GHz register
 		freqGHz = int(round((freq-freqTHz)*10000.0))
 		GHzbyte3 = freqGHz&0xff
 		GHzbyte2 = (freqGHz&0xff00)>>8
-		dataGHz = SendReceive(self.sercon,WRITE,REG_CjumpGHz,GHzbyte2,GHzbyte3)
+		dataGHz = self.SendReceive(WRITE,REG_CjumpGHz,GHzbyte2,GHzbyte3)
 		print('Next jump frequency set to ' + str(dataTHz) + '.' + str(dataGHz) + ' THz')
 		logging.info("Next jump frequency set to " + str(dataTHz) + "." + str(dataGHz) + " THz")
 
@@ -536,14 +536,14 @@ class ITLA_Class:
 		sled = int(sled*100)
 		byte3 = sled&0xff
 		byte2 = (sled&0xff00)>>8
-		datasled = SendReceive(self.sercon,WRITE,REG_CjumpSled,byte2,byte3)
+		datasled = self.SendReceive(WRITE,REG_CjumpSled,byte2,byte3)
 		logging.info("Next jump sled set to " + str(datasled/100.0) + " C")
 
 	def SetNextCurrent(self,current):
 		current = int(current*10)
 		byte3 = current&0xff
 		byte2 = (current&0xff00)>>8
-		datacurrent = SendReceive(self.sercon,WRITE,REG_CjumpCurrent,byte2,byte3)
+		datacurrent = self.SendReceive(WRITE,REG_CjumpCurrent,byte2,byte3)
 		logging.info("Next jump current set to " + str(datacurrent/10.0) + " mA")
 
 	def ExecuteJump(self):
@@ -554,15 +554,15 @@ class ITLA_Class:
 		#Second calculates filter 1
 		#Third calculates fitler 2
 		#Fourth executes the jump
-		SendReceive(self.sercon,WRITE,REG_Cjumpon,0x00,0x01)
-		SendReceive(self.sercon,WRITE,REG_Cjumpon,0x00,0x01)
-		SendReceive(self.sercon,WRITE,REG_Cjumpon,0x00,0x01)
-		SendReceive(self.sercon,WRITE,REG_Cjumpon,0x00,0x01)
+		self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
+		self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
+		self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
+		self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
 
 	def FineTuneFrequency(self,ftf):
 		byte3 = ftf&0xff
 		byte2 = (ftf&0xff00)>>8
-		SendReceive(self.sercon,WRITE,REG_Ftf,byte2,byte3)
+		self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
 		logging.info("Fine tune frequency set to " + str(ftf))
 
 	##############################################################################################################
@@ -571,20 +571,20 @@ class ITLA_Class:
 
 	def ReadTemp(self):
 		#I think this reads laser temperature
-		data = SendReceive(self.sercon,READ,0x43,0x00,0x00)
+		data = self.SendReceive(READ,0x43,0x00,0x00)
 		data = data*0.01
 		logging.info("Laser temperature is " + str(data))
 		return data
 
 	def ReadDeviceTemp(self):
 		#This reads the 'device temperature' instead of the 'laser temperature'. I'm unsure what the difference is
-		data = SendReceive(self.sercon,READ,0x58,0x00,0x00)
+		data = self.SendReceive(READ,0x58,0x00,0x00)
 		data = data
 		logging.info("Device temperature is " + str(data))
 		return data
 
 	def ReadDeviceCurrent(self):
-		data = SendReceive(self.sercon,READ,0x57,0x00,0x00)
+		data = self.SendReceive(READ,0x57,0x00,0x00)
 		data = data
 		logging.info("Device current is " + str(data))
 		return data
