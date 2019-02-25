@@ -3,7 +3,7 @@ import time
 
 if __name__ == "__main__":                            
     
-    ITLA = ITLA_Wrap.ITLA_Class("COM6",9600)
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB12",9600)
      
     #Probe laser and check it's happy
     ITLA.ProbeLaser()
