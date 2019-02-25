@@ -1,15 +1,19 @@
 import ITLA_Wrap
 import time
 
+import sys
+
+sys.stdout.buffer.write(bytes([0xAA]))
+
 if __name__ == "__main__":                            
     
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB12",9600)
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
      
     #Probe laser and check it's happy
     ITLA.ProbeLaser()
     
     #Laser is happier if we set all the parameters when it's off
-    ITLA.EnableLaser(False)
+    # ITLA.EnableLaser(False)
     
     ITLA.SetFrequency(195.50)
     
@@ -21,16 +25,16 @@ if __name__ == "__main__":
     
     ITLA.EnableLaser(True)
 
-    ITLA.EnableWhisperMode(True)
+    # ITLA.EnableWhisperMode(True)
 
-    time.sleep(1)
+    # time.sleep(1)
 
-    ITLA.EnableSweep(True)
+    # ITLA.EnableSweep(True)
 
-    time.sleep(100)
+    # time.sleep(100)
 
 
-    #turn everything off
-    ITLA.EnableSweep(False)
-    ITLA.EnableWhisperMode(False)
-    ITLA.EnableLaser(False)
+    # #turn everything off
+    # ITLA.EnableSweep(False)
+    # ITLA.EnableWhisperMode(False)
+    # ITLA.EnableLaser(False)
