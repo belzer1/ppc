@@ -12,7 +12,6 @@ import sys
 import threading
 import math
 import logging
-import struct
 
 ITLA_NOERROR=0x00
 ITLA_EXERROR=0x01
@@ -121,32 +120,32 @@ class ITLA_Class:
 		bip4=((bip8&0xf0)>>4)^(bip8&0x0f)
 		return bip4
     
-	def Send_command(self,sercon,byte0,byte1,byte2,byte3):
+	def Send_command(self,byte0,byte1,byte2,byte3):
 		b0 = struct.pack('!B',byte0)
 		b1 = struct.pack('!B',byte1) 
 		b2 = struct.pack('!B',byte2)
 		b3 = struct.pack('!B',byte3)
-		print('Sending')
-		print(b0,b1,b2,b3)
+		# print('Sending')
+		# print(b0,b1,b2,b3)
 
-		sercon.write(b0)
-		sercon.write(b1)
-		sercon.write(b2)
-		sercon.write(b3)
+		self.sercon.write(b0)
+		self.sercon.write(b1)
+		self.sercon.write(b2)
+		self.sercon.write(b3)
 
-	def Receive_response(self,sercon):
+	def Receive_response(self):
 		global _error,queue
 		reftime=time.clock()
-		while sercon.inWaiting()<4:
+		while self.sercon.inWaiting()<4:
 			if time.clock()>reftime+0.25:
 				_error=ITLA_NRERROR
 				return(0xFF,0xFF,0xFF,0xFF)
 			time.sleep(0.0001)
 		try:
-			byte0=ord(sercon.read(1))
-			byte1=ord(sercon.read(1))
-			byte2=ord(sercon.read(1))
-			byte3=ord(sercon.read(1))
+			byte0=ord(self.sercon.read(1))
+			byte1=ord(self.sercon.read(1))
+			byte2=ord(self.sercon.read(1))
+			byte3=ord(self.sercon.read(1))
 		except:
 			print('problem with serial communication. queue[0] =',queue)
 			byte0=0xFF
@@ -155,37 +154,37 @@ class ITLA_Class:
 			byte3=0xFF
 		if self.checksum(byte0,byte1,byte2,byte3)==byte0>>4:
 			_error=byte0&0x03
-			print('Receiving:')
-			print(byte0,byte1,byte2,byte3)
+			# print('Receiving:')
+			# print(byte0,byte1,byte2,byte3)
 			return(byte0,byte1,byte2,byte3)
 		else:
 			_error=ITLA_CSERROR
 			return(byte0,byte1,byte2,byte3)
 
-	def Receive_simple_response(self,sercon):
+	def Receive_simple_response(self):
 		global _error,CoBrite
 		reftime=time.clock()
-		while sercon.inWaiting()<4:
+		while self.sercon.inWaiting()<4:
 			if time.clock()>reftime+0.25:
 				_error=ITLA_NRERROR
 				return(0xFF,0xFF,0xFF,0xFF)
 			time.sleep(0.0001)
-		byte0=ord(sercon.read(1))
-		byte1=ord(sercon.read(1))
-		byte2=ord(sercon.read(1))
-		byte3=ord(sercon.read(1))
+		byte0=ord(self.sercon.read(1))
+		byte1=ord(self.sercon.read(1))
+		byte2=ord(self.sercon.read(1))
+		byte3=ord(self.sercon.read(1))
 
 	def ITLAConnect(self,port,baudrate=9600):
 		global CoBrite
 		reftime=time.clock()
 		connected=False
 		try:
-			conn = serial.Serial(port,baudrate , timeout=1)
+			self.sercon = serial.Serial(port,baudrate , timeout=1)
 		except serial.SerialException:
 			return(ITLA_ERROR_SERPORT)
 		baudrate2=4800
 		while baudrate2<115200:
-			self.ITLA(conn,REG_Nop,0,0)
+			self.ITLA(REG_Nop,0,0)
 			if self.ITLALastError()!=ITLA_NOERROR:
 				#go to next baudrate
 				if baudrate2==4800:baudrate2=9600
@@ -193,18 +192,18 @@ class ITLA_Class:
 				elif baudrate2==19200: baudrate2=38400
 				elif baudrate2==38400:baudrate2=57600
 				elif baudrate2==57600:baudrate2=115200
-				conn.close()
+				self.sercon.close()
 				
-				conn = serial.Serial(port,baudrate2 , timeout=1)
+				self.sercon = serial.Serial(port,baudrate2 , timeout=1)
 			else:
-				return(conn)
-		conn.close()
+				return(self.sercon)
+		self.sercon.close()
 		print('Dammit, couldnt find laser')
-		conn = serial.Serial(port,baudrate2 , timeout=1)
+		self.sercon = serial.Serial(port,baudrate2 , timeout=1)
 		print(ITLA_ERROR_SERBAUD)
 		return(ITLA_ERROR_SERBAUD)
 
-	def ITLA(self,sercon,register,data,rw):
+	def ITLA(self,register,data,rw):
 		global latestregister
 		lock=threading.Lock()
 		lock.acquire()
@@ -220,14 +219,14 @@ class ITLA_Class:
 			byte2=int(data/256)
 			byte3=int(data-byte2*256)
 			latestregister=register
-			self.Send_command(sercon,int(self.checksum(0,register,byte2,byte3))*16,register,byte2,byte3)
-			test=self.Receive_response(sercon)
+			self.Send_command(int(self.checksum(0,register,byte2,byte3))*16,register,byte2,byte3)
+			test=self.Receive_response()
 			b0=test[0]
 			b1=test[1]
 			b2=test[2]
 			b3=test[3]
 			if (b0&0x03)==0x02:
-				test=AEA(sercon,b2*256+b3)
+				test=AEA(b2*256+b3)
 				lock.acquire()
 				queue.pop(0)
 				lock.release()
@@ -239,14 +238,14 @@ class ITLA_Class:
 		else:
 			byte2=int(data/256)
 			byte3=int(data-byte2*256)
-			self.Send_command(sercon,int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
-			test=self.Receive_response(sercon)
+			self.Send_command(int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
+			test=self.Receive_response()
 			lock.acquire()
 			queue.pop(0)
 			lock.release()
 			return(test[2]*256+test[3])
 
-	def ITLA_send_only(self,sercon,register,data,rw):
+	def ITLA_send_only(self,register,data,rw):
 		global latestregister
 		global queue
 		global maxrowticket
@@ -258,102 +257,102 @@ class ITLA_Class:
 		SerialLockSet()
 		if rw==0:
 			latestregister=register
-			self.Send_command(sercon,int(self.checksum(0,register,0,0))*16,register,0,0)
-			Receive_simple_response(sercon)
+			self.Send_command(int(self.checksum(0,register,0,0))*16,register,0,0)
+			Receive_simple_response()
 			SerialLockUnSet()
 		else:
 			byte2=int(data/256)
 			byte3=int(data-byte2*256)
-			self.Send_command(sercon,int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
-			Receive_simple_response(sercon)
+			self.Send_command(int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
+			Receive_simple_response()
 			SerialLockUnSet()
          
-	def AEA(self,sercon,bytes):
+	def AEA(self,bytes):
 		outp=''
 		while bytes>0:
-			self.Send_command(sercon,int(self.checksum(0,REG_AeaEar,0,0))*16,REG_AeaEar,0,0)
-			test=self.Receive_response(sercon)
+			self.Send_command(int(self.checksum(0,REG_AeaEar,0,0))*16,REG_AeaEar,0,0)
+			test=self.Receive_response()
 			outp=outp+chr(test[2])
 			outp=outp+chr(test[3])
 			bytes=bytes-2
 		return outp
 
-	def ITLAFWUpgradeStart(self,sercon,raydata,salvage=0):
+	def ITLAFWUpgradeStart(self,raydata,salvage=0):
 		global tempport,raybin
 		#set the baudrate to maximum and reconfigure the serial connection
 		if salvage==0:
-			ref=stripString(ITLA(sercon,REG_Serial,0,0))
+			ref=stripString(ITLA(REG_Serial,0,0))
 			if len(ref)<5:
 				print('problems with communication before start FW upgrade')
-				return(sercon,'problems with communication before start FW upgrade')
-			ITLA(sercon,REG_Resena,0,1)
-		ITLA(sercon,REG_Iocap,64,1) #bits 4-7 are 0x04 for 115200 baudrate
+				return(self.sercon,'problems with communication before start FW upgrade')
+			ITLA(REG_Resena,0,1)
+		ITLA(REG_Iocap,64,1) #bits 4-7 are 0x04 for 115200 baudrate
 		#validate communication with the laser
-		tempport=sercon.portstr
-		sercon.close()
-		sercon = serial.Serial(tempport, 115200, timeout=1)
-		if stripString(ITLA(sercon,REG_Serial,0,0))!=ref:
-			return(sercon,'After change baudrate: serial discrepancy found. Aborting. '+str(stripString(ITLA(sercon,REG_Serial,0,0)))+' '+str( params.serial))
+		tempport=self.sercon.portstr
+		self.sercon.close()
+		self.sercon = serial.Serial(tempport, 115200, timeout=1)
+		if stripString(ITLA(REG_Serial,0,0))!=ref:
+			return(self.sercon,'After change baudrate: serial discrepancy found. Aborting. '+str(stripString(ITLA(REG_Serial,0,0)))+' '+str( params.serial))
 		#load the ray file
 		raybin=raydata
 		if (len(raybin)&0x01):raybin.append('\x00')
-		ITLA(sercon,REG_Dlconfig,2,1)  #first do abort to make sure everything is ok
+		ITLA(REG_Dlconfig,2,1)  #first do abort to make sure everything is ok
 		#print ITLALastError()
 		if ITLALastError()!=ITLA_NOERROR:
-			return( sercon,'After dlconfig abort: error found. Aborting. ' + str(ITLALastError()))
+			return( self.sercon,'After dlconfig abort: error found. Aborting. ' + str(ITLALastError()))
 		#initiate the transfer; INIT_WRITE=0x0001; TYPE=0x1000; RUNV=0x0000
-		#temp=ITLA(sercon,REG_Dlconfig,0x0001 ^ 0x1000 ^ 0x0000,1)
+		#temp=ITLA(self.sercon,REG_Dlconfig,0x0001 ^ 0x1000 ^ 0x0000,1)
 		#check temp for the correct feedback
-		ITLA(sercon,REG_Dlconfig,3*16*256+1,1) # initwrite=1; type =3 in bits 12:15
+		ITLA(REG_Dlconfig,3*16*256+1,1) # initwrite=1; type =3 in bits 12:15
 		#print ITLALastError()
 		if ITLALastError()!=ITLA_NOERROR:
-			return(sercon,'After dlconfig init_write: error found. Aborting. '+str(ITLALastError() ))
-		return(sercon,'')
+			return(self.sercon,'After dlconfig init_write: error found. Aborting. '+str(ITLALastError() ))
+		return(self.sercon,'')
 
-	def ITLAFWUpgradeWrite(self,sercon,count):
+	def ITLAFWUpgradeWrite(self,count):
 		global tempport,raybin
 		#start writing bits
 		teller=0
 		while teller<count:
-			ITLA_send_only(sercon,REG_Ear,struct.unpack('>H',raybin[teller:teller+2])[0],1)
+			ITLA_send_only(REG_Ear,struct.unpack('>H',raybin[teller:teller+2])[0],1)
 			teller=teller+2
 		raybin=raybin[count:]
 		#write done. clean up
 		return('')
 
-	def ITLAFWUpgradeComplete(self,sercon):
+	def ITLAFWUpgradeComplete(self):
 		global tempport,raybin
 		time.sleep(0.5)
-		sercon.flushInput()
-		sercon.flushOutput()
-		ITLA(sercon,REG_Dlconfig,4,1) # done (bit 2)
+		self.sercon.flushInput()
+		self.sercon.flushOutput()
+		ITLA(REG_Dlconfig,4,1) # done (bit 2)
 		if ITLALastError()!=ITLA_NOERROR:
-			return(sercon,'After dlconfig done: error found. Aborting. '+str(ITLALastError()))
+			return(self.sercon,'After dlconfig done: error found. Aborting. '+str(ITLALastError()))
 		#init check
-		ITLA(sercon,REG_Dlconfig,16,1) #init check bit 4
+		ITLA(REG_Dlconfig,16,1) #init check bit 4
 		if ITLALastError()==ITLA_CPERROR:
-			while (ITLA(sercon,REG_Nop,0,0)&0xff00)>0:
+			while (ITLA(REG_Nop,0,0)&0xff00)>0:
 				time.sleep(0.5)
 		elif ITLALastError()!=ITLA_NOERROR:
-			return(sercon,'After dlconfig done: error found. Aborting. '+str(ITLALastError() ))
+			return(self.sercon,'After dlconfig done: error found. Aborting. '+str(ITLALastError() ))
 		#check for valid=1
-		temp=ITLA(sercon,REG_Dlstatus,0,0)
+		temp=ITLA(REG_Dlstatus,0,0)
 		if (temp&0x01==0x00):
-			return(sercon,'Dlstatus not good. Aborting. ')
+			return(self.sercon,'Dlstatus not good. Aborting. ')
 		#write concluding dlconfig
-		ITLA(sercon,REG_Dlconfig,3*256+32, 1) #init run (bit 5) + runv (bit 8:11) =3
+		ITLA(REG_Dlconfig,3*256+32, 1) #init run (bit 5) + runv (bit 8:11) =3
 		if ITLALastError()!=ITLA_NOERROR:
-			return(sercon, 'After dlconfig init run and runv: error found. Aborting. '+str(ITLALastError()))
+			return(self.sercon, 'After dlconfig init run and runv: error found. Aborting. '+str(ITLALastError()))
 		time.sleep(1)
 		#set the baudrate to 9600 and reconfigure the serial connection
-		ITLA(sercon,REG_Iocap,0,1) #bits 4-7 are 0x0 for 9600 baudrate
-		sercon.close()
-		#validate communication with the sercon
-		sercon = serial.Serial(tempport, 9600, timeout=1)
-		ref=stripString(ITLA(sercon,REG_Serial,0,0))
+		ITLA(REG_Iocap,0,1) #bits 4-7 are 0x0 for 9600 baudrate
+		self.sercon.close()
+		#validate communication with the self.sercon
+		self.sercon = serial.Serial(tempport, 9600, timeout=1)
+		ref=stripString(ITLA(REG_Serial,0,0))
 		if len(ref)<5:
-			return( sercon,'After change back to 9600 baudrate: serial discrepancy found. Aborting. '+str(stripString(ITLA(sercon,REG_Serial,0,0)))+' '+str( params.serial))
-		return(sercon,'')
+			return( self.sercon,'After change back to 9600 baudrate: serial discrepancy found. Aborting. '+str(stripString(ITLA(REG_Serial,0,0)))+' '+str( params.serial))
+		return(self.sercon,'')
 
 	def ITLASplitDual(self,input,rank):
 		
@@ -368,19 +367,19 @@ class ITLA_Class:
 
 	def ProbeLaser(self):
 		#Apparently when you write zeroes to the laser, it should have a specific repsonse. It's a decent test to see if the laser is behaving.
-		self.Send_command(self.sercon,0x00,0x00,0x00,0x00)
-		response = self.Receive_response(self.sercon)
+		self.Send_command(0x00,0x00,0x00,0x00)
+		response = self.Receive_response()
 		if response != (84, 0, 0, 16):
 			print('Laser is not behaving! Turning the laser off...')
-			self.EnableLaser(self.sercon,False)
+			self.EnableLaser(False)
 			sys.exit()
 
 	def SendReceive(self,readwrite,register,byte2,byte3):
 		#This self.SendReceive command should be all you need if you want to manually address a known register
 		#Bytes 2 and 3 contain the number value
 		
-		self.Send_command(self.sercon,*self.CommandWithChecksum(readwrite,register,byte2,byte3))
-		byte0, byte1, byte2, byte3 = self.Receive_response(self.sercon)
+		self.Send_command(*self.CommandWithChecksum(readwrite,register,byte2,byte3))
+		byte0, byte1, byte2, byte3 = self.Receive_response()
 		response = (byte2 << 8) + byte3
 		return response
 
@@ -473,8 +472,8 @@ class ITLA_Class:
 		#This function is called when you enable the laser. You might want to use it when using the fine-tune frequency feature
 		pending = 1
 		while pending:
-			self.Send_command(self.sercon,0x00,0x00,0x00,0x00)
-			pending = self.Receive_response(self.sercon)[2]
+			self.Send_command(0x00,0x00,0x00,0x00)
+			pending = self.Receive_response()[2]
 			time.sleep(0.5)
 
 	def EnableWhisperMode(self,state):
