@@ -1,4 +1,4 @@
-#define LASER Serial1
+dd#define LASER Serial1
 #define PC Serial
 
 int byte0;
