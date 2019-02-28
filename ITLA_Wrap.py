@@ -39,6 +39,8 @@ REG_Resena=0x32
 REG_Grid=0x34
 REG_Fcf1=0x35
 REG_Fcf2=0x36
+REG_Freq1=0x40
+REG_Freq2=0x41
 REG_Oop=0x42
 REG_Opsl=0x50
 REG_Opsh=0x51
@@ -58,9 +60,11 @@ REG_Cscanon=0xE5
 REG_Csweepon=0xE5
 REG_Csweepoffset=0xE6
 REG_Cscanoffset=0xE6
+REG_Cscancurrentadjust=0xE7
 REG_Cscansled=0xF0
 REG_Cscanf1=0xF1
 REG_Cscanf2=0xF2
+REG_Cscancurrent=0xF3
 #This registry is write only
 REG_CjumpTHz=0xEA
 #This registry is write only
@@ -524,7 +528,7 @@ class ITLA_Class:
 			data = (data - 65535)*0.1
 		return data
 	##############################################################################################################
-	# 	Functions for the Clean Sweep feature
+	# 	Functions for the Clean Jump feature
 	#	Note I haven't used these functions thoroughly so there might be bugs
 	##############################################################################################################
 
@@ -575,6 +579,103 @@ class ITLA_Class:
 		byte2 = (ftf&0xff00)>>8
 		self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
 		logging.info("Fine tune frequency set to " + str(ftf))
+
+	##############################################################################################################
+	# 	Functions for the Clean Scan feature
+	#	Note I haven't used these functions thoroughly so there might be bugs
+	##############################################################################################################
+
+	def SetScanSled(self,sled):
+		sled_temp = int(sled*100)
+		byte3 = sled_temp&0xff
+		byte2 = (sled_temp&0xff00)>>8
+		self.SendReceive(WRITE,REG_Cscansled,byte2,byte3)
+		logging.info("Next scan sled set to " + str(sled) + " C")
+
+	def SetFilter1(self,temp):
+		temp_temp = int((temp-50)*1000)
+		byte3 = temp_temp&0xff
+		byte2 = (temp_temp&0xff00)>>8
+		self.SendReceive(WRITE,REG_Cscanf1,byte2,byte3)
+		logging.info("Filter 1 set to " + str(temp) + " C")
+
+	def SetFilter2(self,temp):
+		temp_temp = int((temp-50)*1000)
+		byte3 = temp_temp&0xff
+		byte2 = (temp_temp&0xff00)>>8
+		self.SendReceive(WRITE,REG_Cscanf2,byte2,byte3)
+		logging.info("Filter 2 set to " + str(temp) + " C")
+
+	def SetCurrent(self,current):
+		current_temp = current*10
+		byte3 = current_temp&0xff
+		byte2 = (current_temp&0xff00)>>8
+		self.SendReceive(WRITE,REG_Cscancurrent,byte2,byte3)
+		logging.info("Current in centre of scan set to " + str(current) + " mA")
+
+	def SetCurrentAdjust(self,current):
+		current_temp = current*10
+		byte3 = current_temp&0xff
+		byte2 = (current_temp&0xff00)>>8
+		self.SendReceive(WRITE,REG_Cscancurrentadjust,byte2,byte3)
+		logging.info("Current adjust set to " + str(current) + " mA")
+
+	def EnableScan(self,state):
+		if state == True:
+			self.SendReceive(WRITE,REG_Cscanon,0x00,0x01)
+			logging.info("Laser scan enabled")
+			print("scan enabled")
+		else:
+			self.SendReceive(WRITE,REG_Cscanon,0x00,0x00)
+			logging.info("Laser scan disabled")
+			print("scan disabled")
+
+	def SetScanAmplitude(self,freq):
+		byte3 = freq&0xff
+		byte2 = (freq&0xff00)>>8
+		self.SendReceive(WRITE,REG_Cscanamp,byte2,byte3)
+		logging.info("Scan amplitude set to " + str(freq) + " GHz")
+	
+	def LockSled(self):
+		self.SendReceive(WRITE,REG_Cscanon,0x00,0x01)
+		logging.info("Set sled temperature. If clean mode is on, this this will instead start the clean scan")
+
+	def SetChannel1(self):
+		self.SendReceive(WRITE,REG_Channel,0x00,0x01)
+		logging.info("Set to channel 1 to make sure laser comes on at FCF")
+
+	def EnableCleanMode(self,state):
+		if state == True:
+			self.SendReceive(WRITE,REG_Mode,0x00,0x01)
+			logging.info("Clean mode enabled")
+			print("Clean mode enabled")
+		else:
+			self.SendReceive(WRITE,REG_Mode,0x00,0x00)
+			logging.info("Clean mode disabled")
+			print("Clean mode disabled")		
+
+	def WaitForSweep(self):
+		#A loop that will halt code execution until the clean scan state gives the thumbs up
+		pending = 1
+		while pending:
+			resp = self.SendReceive(READ,REG_Csweepsena,0x00,0x00)
+			print(resp)
+			if resp == 0:
+				pending = 0
+			time.sleep(0.5)
+
+	def Status(self):
+		THZ = self.SendReceive(READ,REG_Freq1,0x00,0x00)
+		GHZ = self.SendReceive(READ,REG_Freq2,0x00,0x00)/10
+		freq = THZ + GHZ/1000
+		print("Laser reports it's frequency is " + freq + " THz")
+
+		power = self.SendReceive(READ,REG_Oop,0x00,0x00)
+		print("Laser reports it's power is " + power/100 + " dBm")
+
+		power = self.SendReceive(READ,REG_Oop,0x00,0x00)
+		print("Laser reports it's power is " + power/100 + " dBm")
+		
 
 	##############################################################################################################
 	# 	Other functions
