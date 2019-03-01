@@ -3,13 +3,14 @@ import time
 
 if __name__ == "__main__":                            
     
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB3",9600)
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
      
     #Probe laser and check it's happy
-    ITLA.EnableLaser(False)
+    ITLA.EnableLaser(True)
+    ITLA.Status()
 
-    resp = ITLA.SendReceive(0,0xE8,0x00,0x00)
-    print(resp)
+    # resp = ITLA.SendReceive(0,0xE8,0x00,0x00)
+    # print(resp)
     
     # ITLA.ProbeLaser()
     

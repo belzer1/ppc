@@ -401,6 +401,34 @@ class ITLA_Class:
 	# 	Basic functions you'll probably always need
 	##############################################################################################################
 
+	def Status(self):
+		THZ = self.SendReceive(READ,REG_Freq1,0x00,0x00)
+		GHZ = self.SendReceive(READ,REG_Freq2,0x00,0x00)/10
+		freq = THZ + GHZ/1000
+		print("Laser reports it's frequency is " + str(freq) + " THz")
+
+		power = self.SendReceive(READ,REG_Oop,0x00,0x00)/100
+		print("Laser reports it's power is " + str(power) + " dBm")
+
+
+		temp = self.SendReceive(READ,0x43,0x00,0x00)/100
+		print("Laser reports it's temperature is " + str(temp) + " C")
+
+		#This is an AEA address, check the manual
+		self.SendReceive(READ,0x58,0x00,0x00)		
+		gainchip_temp = self.SendReceive(READ,0x0B,0x00,0x00)/100
+		case_temp = self.SendReceive(READ,0x0B,0x00,0x00)/100
+		print("Laser reports it's case temperature is " + str(case_temp) + " C")
+
+		#This is an AEA address, check the manual
+		self.SendReceive(READ,0x57,0x00,0x00)
+		gainchip_current = self.SendReceive(READ,0x0B,0x00,0x00)
+		TEC_current = self.SendReceive(READ,0x0B,0x00,0x00)
+		print(gainchip_current,TEC_current)
+		print("Laser reports it's case temperature is " + str(case_temp) + " C")
+
+		print("Laser status recorded. Frequecy {} THz, Power {} dBm, Laser Temperature {} C, Case Temperature {} C".format(freq,power,temp,case_temp))
+
 	def SetWavelength(self,wavelength):
 		#Specify wavelength in nm. Note the wavelength will the rounded to the nearest 0.1GHz
 		freq = round((2.99792*10**8/(wavelength*10**-9))*10**-12,4)
@@ -663,18 +691,6 @@ class ITLA_Class:
 			if resp == 0:
 				pending = 0
 			time.sleep(0.5)
-
-	def Status(self):
-		THZ = self.SendReceive(READ,REG_Freq1,0x00,0x00)
-		GHZ = self.SendReceive(READ,REG_Freq2,0x00,0x00)/10
-		freq = THZ + GHZ/1000
-		print("Laser reports it's frequency is " + freq + " THz")
-
-		power = self.SendReceive(READ,REG_Oop,0x00,0x00)
-		print("Laser reports it's power is " + power/100 + " dBm")
-
-		power = self.SendReceive(READ,REG_Oop,0x00,0x00)
-		print("Laser reports it's power is " + power/100 + " dBm")
 		
 
 	##############################################################################################################
