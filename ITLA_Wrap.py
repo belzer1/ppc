@@ -12,6 +12,7 @@ import sys
 import threading
 import math
 import logging
+import csv
 
 ITLA_NOERROR=0x00
 ITLA_EXERROR=0x01
@@ -405,29 +406,29 @@ class ITLA_Class:
 		THZ = self.SendReceive(READ,REG_Freq1,0x00,0x00)
 		GHZ = self.SendReceive(READ,REG_Freq2,0x00,0x00)/10
 		freq = THZ + GHZ/1000
-		print("Laser reports it's frequency is " + str(freq) + " THz")
+		# print("Laser reports it's frequency is " + str(freq) + " THz")
 
-		power = self.SendReceive(READ,REG_Oop,0x00,0x00)/100
-		print("Laser reports it's power is " + str(power) + " dBm")
+		power = self.SendReceive(READ,REG_Oop,0x00,0x00)
+		# print("Laser reports it's power is " + str(power) + " dBm")
 
 
 		temp = self.SendReceive(READ,0x43,0x00,0x00)/100
-		print("Laser reports it's temperature is " + str(temp) + " C")
+		# print("Laser reports it's temperature is " + str(temp) + " C")
 
 		#This is an AEA address, check the manual
 		self.SendReceive(READ,0x58,0x00,0x00)		
 		gainchip_temp = self.SendReceive(READ,0x0B,0x00,0x00)/100
 		case_temp = self.SendReceive(READ,0x0B,0x00,0x00)/100
-		print("Laser reports it's case temperature is " + str(case_temp) + " C")
+		# print("Laser reports it's case temperature is " + str(case_temp) + " C")
 
 		#This is an AEA address, check the manual
 		self.SendReceive(READ,0x57,0x00,0x00)
 		gainchip_current = self.SendReceive(READ,0x0B,0x00,0x00)
 		TEC_current = self.SendReceive(READ,0x0B,0x00,0x00)
-		print(gainchip_current,TEC_current)
-		print("Laser reports it's case temperature is " + str(case_temp) + " C")
+		# print(gainchip_current,TEC_current)
+		# print("Laser reports it's case temperature is " + str(case_temp) + " C")
 
-		print("Laser status recorded. Frequecy {} THz, Power {} dBm, Laser Temperature {} C, Case Temperature {} C".format(freq,power,temp,case_temp))
+		print("Laser status recorded. Frequency {} THz, Power {} dBm, Laser Temperature {} C, Case Temperature {} C".format(freq,power,temp,case_temp))
 
 	def SetWavelength(self,wavelength):
 		#Specify wavelength in nm. Note the wavelength will the rounded to the nearest 0.1GHz
@@ -483,8 +484,10 @@ class ITLA_Class:
 		#Specify power in dBm
 		byte3 = power&0xff
 		byte2 = (power&0xff00)>>8
-		self.SendReceive(WRITE,REG_Power,byte2,byte3)
+		resp = self.SendReceive(WRITE,REG_Power,byte2,byte3)
 		logging.info("Laser power set to " + str(power) + " dBm")
+		"Laser power set to " + str(power) + " dBm"
+		return resp
 
 	def EnableLaser(self,state):
 		if state == True:
@@ -497,6 +500,7 @@ class ITLA_Class:
 		else:
 			self.SendReceive(WRITE,REG_Resena,0x00,0x00)
 			logging.info("Laser disabled")
+			self.WaitForLaser()
 			print('Laser is off')
 
 	def WaitForLaser(self):
@@ -552,8 +556,9 @@ class ITLA_Class:
 		#Reads the current frequency offset of the sweep in GHz
 		#Can be buggy if you don't have a small delay between starting sweep and using this function
 		data = self.SendReceive(READ,REG_Csweepoffset,0x00,0x00)
-		if data > 65535/2:
-			data = (data - 65535)*0.1
+		# if data > 65535/2:
+		# 	data = (data - 65535)*0.1
+		(data - 2000)*0.1
 		return data
 	##############################################################################################################
 	# 	Functions for the Clean Jump feature
@@ -682,16 +687,22 @@ class ITLA_Class:
 			logging.info("Clean mode disabled")
 			print("Clean mode disabled")		
 
-	def WaitForSweep(self):
-		#A loop that will halt code execution until the clean scan state gives the thumbs up
-		pending = 1
-		while pending:
-			resp = self.SendReceive(READ,REG_Csweepsena,0x00,0x00)
-			print(resp)
-			if resp == 0:
-				pending = 0
-			time.sleep(0.5)
-		
+	def IsSweeping(self):
+		#A function that reads 0xE5. If the responce is odd, then the laser is sweep. Else it is ready for next datapoints
+		resp = self.SendReceive(READ,REG_Csweepsena,0x00,0x00)
+		return resp%2
+
+	def ImportSequence(self):
+		with open('1dBm.csv','r') as csvfile:
+		    reader = csv.reader(csvfile, delimiter=' ')
+		    for row in reader:
+		        power.append(float(row[0]))
+		        frequency.append(float(row[1]))
+		        current.append(float(row[2]))
+		        adjust1.append(float(row[3]))
+		        adjust2.append(float(row[4]))
+		return (power, frequency, current, adjust1, adjust2)
+
 
 	##############################################################################################################
 	# 	Other functions
