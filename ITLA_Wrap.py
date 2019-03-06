@@ -13,6 +13,7 @@ import threading
 import math
 import logging
 import csv
+import ctypes
 
 ITLA_NOERROR=0x00
 ITLA_EXERROR=0x01
@@ -402,34 +403,6 @@ class ITLA_Class:
 	# 	Basic functions you'll probably always need
 	##############################################################################################################
 
-	def Status(self):
-		THZ = self.SendReceive(READ,REG_Freq1,0x00,0x00)
-		GHZ = self.SendReceive(READ,REG_Freq2,0x00,0x00)/10
-		freq = THZ + GHZ/1000
-		# print("Laser reports it's frequency is " + str(freq) + " THz")
-
-		power = self.SendReceive(READ,REG_Oop,0x00,0x00)
-		# print("Laser reports it's power is " + str(power) + " dBm")
-
-
-		temp = self.SendReceive(READ,0x43,0x00,0x00)/100
-		# print("Laser reports it's temperature is " + str(temp) + " C")
-
-		#This is an AEA address, check the manual
-		self.SendReceive(READ,0x58,0x00,0x00)		
-		gainchip_temp = self.SendReceive(READ,0x0B,0x00,0x00)/100
-		case_temp = self.SendReceive(READ,0x0B,0x00,0x00)/100
-		# print("Laser reports it's case temperature is " + str(case_temp) + " C")
-
-		#This is an AEA address, check the manual
-		self.SendReceive(READ,0x57,0x00,0x00)
-		gainchip_current = self.SendReceive(READ,0x0B,0x00,0x00)
-		TEC_current = self.SendReceive(READ,0x0B,0x00,0x00)
-		# print(gainchip_current,TEC_current)
-		# print("Laser reports it's case temperature is " + str(case_temp) + " C")
-
-		print("Laser status recorded. Frequency {} THz, Power {} dBm, Laser Temperature {} C, Case Temperature {} C".format(freq,power,temp,case_temp))
-
 	def SetWavelength(self,wavelength):
 		#Specify wavelength in nm. Note the wavelength will the rounded to the nearest 0.1GHz
 		freq = round((2.99792*10**8/(wavelength*10**-9))*10**-12,4)
@@ -509,7 +482,8 @@ class ITLA_Class:
 		pending = 1
 		while pending:
 			self.Send_command(0x00,0x00,0x00,0x00)
-			pending = self.Receive_response()[2]
+			resp = self.Receive_response()
+			pending = resp[2]
 			time.sleep(0.5)
 
 	def EnableWhisperMode(self,state):
@@ -619,7 +593,7 @@ class ITLA_Class:
 	##############################################################################################################
 
 	def SetScanSled(self,sled):
-		sled_temp = int(sled*100)
+		sled_temp = int(sled*1000)
 		byte3 = sled_temp&0xff
 		byte2 = (sled_temp&0xff00)>>8
 		self.SendReceive(WRITE,REG_Cscansled,byte2,byte3)
@@ -640,18 +614,16 @@ class ITLA_Class:
 		logging.info("Filter 2 set to " + str(temp) + " C")
 
 	def SetCurrent(self,current):
-		current_temp = current*10
-		byte3 = current_temp&0xff
-		byte2 = (current_temp&0xff00)>>8
+		byte3 = current&0xff
+		byte2 = (current&0xff00)>>8
 		self.SendReceive(WRITE,REG_Cscancurrent,byte2,byte3)
 		logging.info("Current in centre of scan set to " + str(current) + " mA")
 
-	def SetCurrentAdjust(self,current):
-		current_temp = current*10
-		byte3 = current_temp&0xff
-		byte2 = (current_temp&0xff00)>>8
+	def SetCurrentAdjust(self,adjust1,adjust2):
+		byte3 = adjust2&0xff
+		byte2 = adjust1&0xff
 		self.SendReceive(WRITE,REG_Cscancurrentadjust,byte2,byte3)
-		logging.info("Current adjust set to " + str(current) + " mA")
+		logging.info("Current adjust set to {}, {}".format(adjust1,adjust2))
 
 	def EnableScan(self,state):
 		if state == True:
@@ -702,6 +674,29 @@ class ITLA_Class:
 		        adjust1.append(float(row[3]))
 		        adjust2.append(float(row[4]))
 		return (power, frequency, current, adjust1, adjust2)
+
+
+	def ScanStatus(self):
+		power = self.SendReceive(READ,REG_Oop,0x00,0x00)/100
+
+		#This is an AEA address, check the manual
+		self.SendReceive(READ,0x58,0x00,0x00)		
+		gainchip_temp = self.SendReceive(READ,REG_AeaEar,0x00,0x00)
+		gainchip_temp = (ctypes.c_short(gainchip_temp).value)/100
+		case_temp = self.SendReceive(READ,REG_AeaEar,0x00,0x00)
+		case_temp = (ctypes.c_short(case_temp).value)/100
+
+		#This is an AEA address, check the manual
+		self.SendReceive(READ,0x57,0x00,0x00)
+		gainchip_current = self.SendReceive(READ,REG_AeaEar,0x00,0x00)*0.1
+		print(gainchip_current)
+		TEC_current = self.SendReceive(READ,REG_AeaEar,0x00,0x00)*0.1
+
+		offset = self.SendReceive(READ,REG_Cscanoffset,0x00,0x00)
+		offset = (offset - 2000)*0.1
+
+
+		print("{:4.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,gainchip_temp,case_temp,offset))
 
 
 	##############################################################################################################
