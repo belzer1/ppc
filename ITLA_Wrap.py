@@ -91,8 +91,15 @@ _error=ITLA_NOERROR
 seriallock=0
 
 class ITLA_Class:
-	def __init__(self,port,baudrate):
-            self.sercon = self.ITLAConnect(port,baudrate)
+	def __init__(self,port,baudrate, com_type):
+		if com_type == 'direct':
+			self.sercon = self.ITLAConnect(port,baudrate)
+		elif com_type == 'MCU':
+			self.sercon = serial.Serial(port, baudrate)
+			self.sercon.reset_input_buffer()
+			self.sercon.reset_output_buffer()
+		else:
+			print("Enter 'direct' or 'MCU' when initialising laser")
 
 	def stripString(self,inp):
 		outp=''
@@ -114,18 +121,18 @@ class ITLA_Class:
 		global seriallock
 		global queue
 		seriallock=1
-    
+	
 	def SerialLockUnSet(self):
 		global seriallock
 		global queue
 		seriallock=0
 		queue.pop(0)
-    
+	
 	def checksum(self,byte0,byte1,byte2,byte3):
 		bip8=(byte0&0x0f)^byte1^byte2^byte3
 		bip4=((bip8&0xf0)>>4)^(bip8&0x0f)
 		return bip4
-    
+	
 	def Send_command(self,byte0,byte1,byte2,byte3):
 		b0 = struct.pack('!B',byte0)
 		b1 = struct.pack('!B',byte1) 
@@ -272,7 +279,7 @@ class ITLA_Class:
 			self.Send_command(int(self.checksum(1,register,byte2,byte3))*16+1,register,byte2,byte3)
 			Receive_simple_response()
 			SerialLockUnSet()
-         
+		 
 	def AEA(self,bytes):
 		outp=''
 		while bytes>0:
@@ -666,13 +673,13 @@ class ITLA_Class:
 
 	def ImportSequence(self):
 		with open('1dBm.csv','r') as csvfile:
-		    reader = csv.reader(csvfile, delimiter=' ')
-		    for row in reader:
-		        power.append(float(row[0]))
-		        frequency.append(float(row[1]))
-		        current.append(float(row[2]))
-		        adjust1.append(float(row[3]))
-		        adjust2.append(float(row[4]))
+			reader = csv.reader(csvfile, delimiter=' ')
+			for row in reader:
+				power.append(float(row[0]))
+				frequency.append(float(row[1]))
+				current.append(float(row[2]))
+				adjust1.append(float(row[3]))
+				adjust2.append(float(row[4]))
 		return (power, frequency, current, adjust1, adjust2)
 
 
@@ -689,7 +696,6 @@ class ITLA_Class:
 		#This is an AEA address, check the manual
 		self.SendReceive(READ,0x57,0x00,0x00)
 		gainchip_current = self.SendReceive(READ,REG_AeaEar,0x00,0x00)*0.1
-		print(gainchip_current)
 		TEC_current = self.SendReceive(READ,REG_AeaEar,0x00,0x00)*0.1
 
 		offset = self.SendReceive(READ,REG_Cscanoffset,0x00,0x00)

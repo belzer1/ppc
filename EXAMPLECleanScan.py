@@ -5,7 +5,8 @@ import csv
 
 if __name__ == "__main__":                            
     
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600)
+    # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600,'direct')
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM38",115200,'MCU')
     
     frequency = []
     sled = []
@@ -26,7 +27,7 @@ if __name__ == "__main__":
             adjust2.append(int(row[7])) 
     
     ITLA.EnableLaser(False)
-    time.sleep(10)
+    time.sleep(1)
     
     # ITLA.ProbeLaser()
     
@@ -44,7 +45,8 @@ if __name__ == "__main__":
 
     ITLA.SetChannel1()
 
-    ITLA.ScanStatus()
+    # ITLA.ScanStatus()
+
     ITLA.EnableLaser(True)
 
     ITLA.EnableCleanMode(True)
@@ -64,7 +66,7 @@ if __name__ == "__main__":
             ITLA.ScanStatus()
             # print(ITLA.ReadOffsetFreq())
             # print(ITLA.SendReceive(0,0xE5,0x00,0x01))
-            time.sleep(0.05)    
+            time.sleep(0.1)
 
     ITLA.EnableScan(False)
 
