@@ -2,11 +2,14 @@ import ITLA_Wrap
 import time
 import numpy as np
 import csv
+import logging
 
-if __name__ == "__main__":                            
+if __name__ == "__main__":       
+    logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
+
     
     # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600,'direct')
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM38",115200,'MCU')
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM45",115200,'MCU')
     
     frequency = []
     sled = []
@@ -27,7 +30,7 @@ if __name__ == "__main__":
             adjust2.append(int(row[7])) 
     
     ITLA.EnableLaser(False)
-    time.sleep(1)
+    time.sleep(20)
     
     # ITLA.ProbeLaser()
     
@@ -49,11 +52,15 @@ if __name__ == "__main__":
 
     ITLA.EnableLaser(True)
 
+    time.sleep(5)
+
     ITLA.EnableCleanMode(True)
 
-    time.sleep(0.5)
+    time.sleep(5)
 
     ITLA.EnableScan(True)
+
+    ITLA.Send_command(255,255,255,255) 
 
     for idx, freq in enumerate(frequency):
         print('Setting next data point, centred on {} THz'.format(freq))
@@ -64,10 +71,12 @@ if __name__ == "__main__":
         ITLA.SetCurrent(current[idx])
         while ITLA.IsSweeping():
             ITLA.ScanStatus()
+            ITLA.Send_command(1,253,253,253) 
             # print(ITLA.ReadOffsetFreq())
             # print(ITLA.SendReceive(0,0xE5,0x00,0x01))
-            time.sleep(0.1)
+            time.sleep(0.5)
 
+    ITLA.Send_command(254,254,254,254) 
     ITLA.EnableScan(False)
 
     ITLA.EnableCleanMode(False)

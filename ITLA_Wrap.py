@@ -145,6 +145,8 @@ class ITLA_Class:
 		self.sercon.write(b1)
 		self.sercon.write(b2)
 		self.sercon.write(b3)
+		logging.info("Sent {}, {}, {}, {}".format(byte0, byte1, byte2, byte3))
+
 
 	def Receive_response(self):
 		global _error,queue
@@ -169,6 +171,7 @@ class ITLA_Class:
 			_error=byte0&0x03
 			# print('Receiving:')
 			# print(byte0,byte1,byte2,byte3)
+			logging.info("Receive {}, {}, {}, {}".format(byte0, byte1, byte2, byte3))
 			return(byte0,byte1,byte2,byte3)
 		else:
 			_error=ITLA_CSERROR
@@ -698,11 +701,12 @@ class ITLA_Class:
 		gainchip_current = self.SendReceive(READ,REG_AeaEar,0x00,0x00)*0.1
 		TEC_current = self.SendReceive(READ,REG_AeaEar,0x00,0x00)*0.1
 
-		offset = self.SendReceive(READ,REG_Cscanoffset,0x00,0x00)
-		offset = (offset - 2000)*0.1
+		# offset = self.SendReceive(READ,REG_Cscanoffset,0x00,0x00)
+		# offset = (offset - 2000)*0.1
+		offset =  1
 
 
-		print("{:4.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,gainchip_temp,case_temp,offset))
+		print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,gainchip_temp,case_temp,offset))
 
 
 	##############################################################################################################
