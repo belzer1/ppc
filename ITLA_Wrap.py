@@ -705,7 +705,6 @@ class ITLA_Class:
 		# offset = (offset - 2000)*0.1
 		offset =  1
 
-
 		print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,gainchip_temp,case_temp,offset))
 
 
@@ -742,19 +741,19 @@ class ITLA_Class:
 		if byte1 != 66:
 			print('Error! I expected to read the power level but instead got a response from register ' + byte1)
 			logging.error("Expected register 66, got " + byte1)
-		power = (byte2 << 8) + byte3
+		power = ((byte2 << 8) + byte3)/100
 
 		byte0, byte1, byte2, byte3 = self.Receive_response()
 		if byte1 != 11:
 			print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
 			logging.error("Expected register 11, got " + byte1)
-		laser_temperature = (byte2 << 8) + byte3
+		laser_temperature = ((byte2 << 8) + byte3)/100
 
 		byte0, byte1, byte2, byte3 = self.Receive_response()
 		if byte1 != 11:
 			print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
 			logging.error("Expected register 11, got " + byte1)
-		case_temperature = (byte2 << 8) + byte3
+		case_temperature = ((byte2 << 8) + byte3)/100
 
 		byte0, byte1, byte2, byte3 = self.Receive_response()
 		if byte1 != 11:
@@ -769,18 +768,20 @@ class ITLA_Class:
 		TEC_current = (byte2 << 8) + byte3
 
 		byte0, byte1, byte2, byte3 = self.Receive_response()
-		if byte1 != 229:
-			print('Error! I expected to read the scan status but instead got a response from register ' + byte1)
-			logging.error("Expected register 229, got " + byte1)
-		offset = (byte2 << 8) + byte3
-
-		byte0, byte1, byte2, byte3 = self.Receive_response()
 		if byte1 != 230:
 			print('Error! I expected to read the frequency offset but instead got a response from register ' + byte1)
 			logging.error("Expected register 230, got " + byte1)
+		offset = ((byte2 << 8) + byte3 - 2000)*0.1
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 229:
+			print('Error! I expected to read the scan status but instead got a response from register ' + byte1)
+			logging.error("Expected register 229, got " + byte1)
 		scan_status = (byte2 << 8) + byte3
 
-		return power, laser_temperature, case_temperature, laser_current, TEC_current, offset, scan_status
+		print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,laser_temperature,case_temperature,offset))
+
+		return scan_status
 
 	def EnableTeensyMonitor(self,state):
 		if state == True:

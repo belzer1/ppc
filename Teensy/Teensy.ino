@@ -7,7 +7,7 @@ int byte2;
 int byte3;
 
 unsigned long previousMillis = 0; 
-const long update_period = 500;
+const long update_period = 100;
 
 boolean scanning = false;
 
@@ -45,7 +45,7 @@ void scan_monitor(){
     probe_temperature();
     probe_current();
     probe_offset(true);
-    probe_scan(); 
+    scanning = probe_scan();
   } else {	//else just do a offset read and write it to the analog output for external monitoring
   	probe_offset(false);
   }
@@ -134,7 +134,7 @@ void probe_current() {
   pass_on_to_PC();
 }
 
-void probe_scan() {
+boolean probe_scan() {
   //The sequence of bytes needed to read scan status
   LASER.write(176);
   LASER.write(229);
@@ -143,7 +143,24 @@ void probe_scan() {
 
   wait_for_laser();
   // pass on bytes of scan status
-  pass_on_to_PC();
+  byte0 = LASER.read();
+  byte1 = LASER.read();
+  byte2 = LASER.read();
+  byte3 = LASER.read();  
+  PC.write(byte0);
+  PC.write(byte1);
+  PC.write(byte2);
+  PC.write(byte3);
+  boolean ret;
+  
+  if (byte3 % 2 == 0){
+    ret = false;
+  } else {
+    ret = true;
+  }
+
+  return ret;
+  
 }
 
 void probe_offset(boolean pass_on) {
@@ -195,10 +212,8 @@ void pass_on_to_LASER() {
 
   if(byte1 == 255){ //the signal to start scan monitor mode
     scanning = true;
-    digitalWrite(ledPin, HIGH);
   } else if(byte1 == 254) { //the signal to stop scan monitor mode
     scanning = false;
-    digitalWrite(ledPin, LOW);
   } else {  
     LASER.write(byte0);
     LASER.write(byte1);
@@ -212,11 +227,19 @@ void loop() {
   if (LASER.available() >= 4){
     pass_on_to_PC();
   } else if (PC.available() >= 4){
+    scanning = false;
     pass_on_to_LASER();
   } else if (scanning){
     scan_monitor();
+    delay(1);
   }
 
-  delay(10);
+  if(scanning){
+    digitalWrite(ledPin, HIGH);
+    } else {
+      digitalWrite(ledPin, LOW);
+  }
 
+  delay(1);  
+  
 }

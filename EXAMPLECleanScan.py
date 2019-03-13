@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     
     # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600,'direct')
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM45",115200,'MCU')
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM25",115200,'MCU')
     
     frequency = []
     sled = []
@@ -61,24 +61,23 @@ if __name__ == "__main__":
     ITLA.EnableScan(True)
     scan_status = 1 #odd value means the laser is scanning 
 
-    ITLA.EnableTeensyMonitor(True)
-
     for idx, freq in enumerate(frequency):
+        ITLA.EnableTeensyMonitor(False)
         print('Loading next data point, centred on {} THz'.format(freq))
         ITLA.SetScanSled(sled[idx])
         ITLA.SetFilter1(filter1[idx])
         ITLA.SetFilter2(filter2[idx])
         ITLA.SetCurrentAdjust(adjust1[idx],adjust2[idx])
         ITLA.SetCurrent(current[idx])
-        while scan_status%2:
+        scan_status = 1
+        ITLA.EnableTeensyMonitor(True)
+        while scan_status%2:            
             if ITLA.sercon.inWaiting() > 0:
-                power, laser_temperature, case_temperature, laser_current, TEC_current, offset, scan_status = ITLA.TeensyReadStatus()
-                print('Teensy giving status update: {} dBm, {} C, {} C, {} mA, {} mA, {} GHz, {}')
+                scan_status = ITLA.TeensyReadStatus()
             time.sleep(0.0001)
 
     ITLA.EnableTeensyMonitor(False)
     ITLA.EnableScan(False)
-
     ITLA.EnableCleanMode(False)
 
     ITLA.EnableLaser(False)
