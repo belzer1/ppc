@@ -33,3 +33,6 @@ Other:
 ReadTemp() 						#Return the laser temperature
 ReadDeviceTemp(self)			#This returns the 'device temperature' instead of the 'laser temperature'. I'm unsure what the difference is
 ReadDeviceCurrent(self):		#Return the device's current
+
+Useful information:
+A full scan of the Photonics 3 range in 50GHz increments takes 15 minutes

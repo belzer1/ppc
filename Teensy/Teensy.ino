@@ -22,6 +22,7 @@ void setup() {
   LASER.begin(9600);
 
   pinMode(ledPin, OUTPUT);
+  pinMode(15, OUTPUT);
   
   analogWriteResolution(12);
 }
@@ -188,6 +189,11 @@ void probe_offset(boolean pass_on) {
   int laser_offset = (byte2 << 8) + byte3;
   //  write result to analog pin for external monitoring
   analogWrite(A22,laser_offset);
+  if (abs(laser_offset-2000)<500){
+    digitalWrite(15,HIGH);
+  } else {
+    digitalWrite(15,LOW);
+  }
 }
 
 void pass_on_to_PC() {

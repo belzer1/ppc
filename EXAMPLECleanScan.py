@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     
     # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600,'direct')
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM25",115200,'MCU')
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM4",115200,'MCU')
     
     frequency = []
     sled = []
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     ITLA.SetFrequency(191.50)
 
-    ITLA.SetScanAmplitude(100)
+    ITLA.SetScanAmplitude(120)
 
     ITLA.SetPower(1000)
 
