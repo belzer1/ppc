@@ -733,3 +733,61 @@ class ITLA_Class:
 		logging.info("Device current is " + str(data))
 		return data
 
+	##############################################################################################################
+	# 	Functions for communicating with Teensy
+	##############################################################################################################
+
+	def TeensyReadStatus(self):
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 66:
+			print('Error! I expected to read the power level but instead got a response from register ' + byte1)
+			logging.error("Expected register 66, got " + byte1)
+		power = (byte2 << 8) + byte3
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 11:
+			print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+			logging.error("Expected register 11, got " + byte1)
+		laser_temperature = (byte2 << 8) + byte3
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 11:
+			print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+			logging.error("Expected register 11, got " + byte1)
+		case_temperature = (byte2 << 8) + byte3
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 11:
+			print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+			logging.error("Expected register 11, got " + byte1)
+		laser_current = (byte2 << 8) + byte3
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 11:
+			print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+			logging.error("Expected register 11, got " + byte1)
+		TEC_current = (byte2 << 8) + byte3
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 229:
+			print('Error! I expected to read the scan status but instead got a response from register ' + byte1)
+			logging.error("Expected register 229, got " + byte1)
+		offset = (byte2 << 8) + byte3
+
+		byte0, byte1, byte2, byte3 = self.Receive_response()
+		if byte1 != 230:
+			print('Error! I expected to read the frequency offset but instead got a response from register ' + byte1)
+			logging.error("Expected register 230, got " + byte1)
+		scan_status = (byte2 << 8) + byte3
+
+		return power, laser_temperature, case_temperature, laser_current, TEC_current, offset, scan_status
+
+	def EnableTeensyMonitor(self,state):
+		if state == True:
+			self.Send_command(255,255,255,255)
+			print("Putting teensy in to monitor mode")
+			logging.info("Putting teensy in to monitor mode")
+		else:
+			self.Send_command(254,254,254,254)
+			print("taking teensy out of monitor mode")
+			logging.info("Taking teensy out of monitor mode")

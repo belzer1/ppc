@@ -52,31 +52,31 @@ if __name__ == "__main__":
 
     ITLA.EnableLaser(True)
 
-    time.sleep(5)
+    time.sleep(1)
 
     ITLA.EnableCleanMode(True)
 
-    time.sleep(5)
+    time.sleep(1)
 
     ITLA.EnableScan(True)
+    scan_status = 1 #odd value means the laser is scanning 
 
-    ITLA.Send_command(255,255,255,255) 
+    ITLA.EnableTeensyMonitor(True)
 
     for idx, freq in enumerate(frequency):
-        print('Setting next data point, centred on {} THz'.format(freq))
+        print('Loading next data point, centred on {} THz'.format(freq))
         ITLA.SetScanSled(sled[idx])
         ITLA.SetFilter1(filter1[idx])
         ITLA.SetFilter2(filter2[idx])
         ITLA.SetCurrentAdjust(adjust1[idx],adjust2[idx])
         ITLA.SetCurrent(current[idx])
-        while ITLA.IsSweeping():
-            ITLA.ScanStatus()
-            ITLA.Send_command(1,253,253,253) 
-            # print(ITLA.ReadOffsetFreq())
-            # print(ITLA.SendReceive(0,0xE5,0x00,0x01))
-            time.sleep(0.5)
+        while scan_status%2:
+            if ITLA.sercon.inWaiting() > 0:
+                power, laser_temperature, case_temperature, laser_current, TEC_current, offset, scan_status = ITLA.TeensyReadStatus()
+                print('Teensy giving status update: {} dBm, {} C, {} C, {} mA, {} mA, {} GHz, {}')
+            time.sleep(0.0001)
 
-    ITLA.Send_command(254,254,254,254) 
+    ITLA.EnableTeensyMonitor(False)
     ITLA.EnableScan(False)
 
     ITLA.EnableCleanMode(False)
