@@ -465,6 +465,7 @@ class ITLA_Class:
 
 	def SetPower(self,power):
 		#Specify power in dBm
+		power = int(power*100)
 		byte3 = power&0xff
 		byte2 = (power&0xff00)>>8
 		resp = self.SendReceive(WRITE,REG_Power,byte2,byte3)
