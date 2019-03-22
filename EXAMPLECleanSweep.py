@@ -11,12 +11,12 @@ if __name__ == "__main__":
     ITLA.EnableLaser(False)
     #Set frequency in THz
     ITLA.SetFrequency(195.50)
+    #Set power in dBm
+    ITLA.SetPower(10.0)
     #Set sweep range in GHz
     ITLA.SetSweepRange(140)
     #Set sweep rare in MHZ/s
-    ITLA.SetSweepRate(6500)
-    #Set power in dBm
-    ITLA.SetPower(10.0)
+    ITLA.SetSweepRate(6500)    
     
     ITLA.EnableLaser(True)
     
@@ -28,7 +28,6 @@ if __name__ == "__main__":
 
     time.sleep(100)
     #DO SCIENCE
-
 
     #turn everything off
     ITLA.EnableSweep(False)
