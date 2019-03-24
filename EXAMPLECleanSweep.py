@@ -25,6 +25,7 @@ if __name__ == "__main__":
     time.sleep(1)
 
     ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
 
     time.sleep(100)
     #DO SCIENCE
