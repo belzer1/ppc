@@ -1,9 +1,10 @@
-import ITLA_Wrap
+gimport ITLA_Wrap
 import time
 
 if __name__ == "__main__":                            
     
     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
+    # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM4",115200,'MCU')
      
     #Probe laser and check it's happy
     ITLA.ProbeLaser()
