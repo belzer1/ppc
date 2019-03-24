@@ -186,7 +186,11 @@ void probe_offset(boolean pass_on) {
   }
 
   // calculate laser offset, encoding as ##### TO DO
-  int laser_offset = (byte2 << 8) + byte3;
+  int laser_offset = (byte2 << 8) + byte3; //this works for CleanScan
+//  if (laser_offset > 65535/2){
+//    laser_offset = laser_offset - 65535;
+//  }
+//  laser_offset = laser_offset + 2000; //this works for CleanSweep
   //  write result to analog pin for external monitoring
   analogWrite(A22,laser_offset);
   if (abs(laser_offset-2000)<500){

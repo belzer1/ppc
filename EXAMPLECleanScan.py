@@ -42,13 +42,13 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
 
     # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600,'direct')
-    # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM4",115200,'MCU')
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM19",115200,'MCU')
     
     CleanScan = CleanScanParameters('10.0dBm')
     CleanScan.set_frequency_range(195,196)
     
     ITLA.EnableLaser(False)
-    time.sleep(20)
+    time.sleep(5)
     
     # ITLA.ProbeLaser()
     
@@ -56,13 +56,15 @@ if __name__ == "__main__":
 
     ITLA.LockSled()
 
-    ITLA.SetCurrentAdjust(adjust1[0],adjust2[0])
+    ITLA.SetCurrentAdjust(CleanScan.adjust1[0],CleanScan.adjust2[0])
 
-    ITLA.SetFrequency(191.50)
+    ITLA.SetFrequency(195)
 
     ITLA.SetScanAmplitude(120)
 
-    ITLA.SetPower(1000)
+    ITLA.SetSweepRate(20000)    
+
+    ITLA.SetPower(10)
 
     ITLA.SetChannel1()
 

@@ -1,10 +1,10 @@
-gimport ITLA_Wrap
+import ITLA_Wrap
 import time
 
 if __name__ == "__main__":                            
     
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
-    # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM4",115200,'MCU')
+    # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
+    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM15",115200,'MCU')
      
     #Probe laser and check it's happy
     ITLA.ProbeLaser()
@@ -15,9 +15,9 @@ if __name__ == "__main__":
     #Set power in dBm
     ITLA.SetPower(10.0)
     #Set sweep range in GHz
-    ITLA.SetSweepRange(140)
+    ITLA.SetSweepRange(120)
     #Set sweep rare in MHZ/s
-    ITLA.SetSweepRate(6500)    
+    ITLA.SetSweepRate(20000)    
     
     ITLA.EnableLaser(True)
     
