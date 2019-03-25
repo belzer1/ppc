@@ -39,7 +39,6 @@ class CleanScanParameters:
 
 if __name__ == "__main__":       
     logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
-    logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")
 
     # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB20",9600,'direct')
     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM19",115200,'MCU')

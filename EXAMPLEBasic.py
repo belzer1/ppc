@@ -1,7 +1,8 @@
 import ITLA_Wrap
 import time
 
-if __name__ == "__main__":                            
+if __name__ == "__main__":  
+	logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")                          
     
     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
      
