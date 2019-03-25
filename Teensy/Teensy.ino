@@ -6,6 +6,8 @@ int byte1;
 int byte2;
 int byte3;
 
+boolean laser_floating = true;
+
 unsigned long previousMillis = 0; 
 const long update_period = 100;
 
@@ -18,8 +20,7 @@ void setup() {
   // open serial port to computer
   PC.begin(9600);
   
-  //open serial port to laser
-  LASER.begin(9600);
+  // dont open serial port to LASER to keep it floating, so laser will talk to PC directly
 
   pinMode(ledPin, OUTPUT);
   pinMode(15, OUTPUT);
@@ -234,6 +235,14 @@ void pass_on_to_LASER() {
 }
 
 void loop() {
+//  sleep until I get my first message from PC, then open port to LASER
+  if(laser_floating){
+    while(PC.available()=0){
+      delay(1);
+    }
+    laser_floating = false;
+    LASER.begin(9600);    
+  }
 
   if (LASER.available() >= 4){
     pass_on_to_PC();
