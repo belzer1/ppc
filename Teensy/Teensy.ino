@@ -99,7 +99,7 @@ void probe_temperature() {
   wait_for_laser();
   // pass on the bytes of case temperature
   pass_on_to_PC();
-}s
+}
 
 void probe_current() {
   //The sequence of bytes needed to read the laser temperatures, returned as AEA
@@ -237,7 +237,7 @@ void pass_on_to_LASER() {
 void loop() {
 //  sleep until I get my first message from PC, then open port to LASER
   if(laser_floating){
-    while(PC.available()=0){
+    while(PC.available()==0){
       delay(1);
     }
     laser_floating = false;

@@ -465,13 +465,13 @@ class ITLA_Class:
 
 	def SetPower(self,power):
 		#Specify power in dBm
-		power = int(power*100)
-		byte3 = power&0xff
-		byte2 = (power&0xff00)>>8
+		power_int = int(power*100)
+		byte3 = power_int&0xff
+		byte2 = (power_int&0xff00)>>8
 		resp = self.SendReceive(WRITE,REG_Power,byte2,byte3)
 		logging.info("Laser power set to " + str(power) + " dBm")
-		"Laser power set to " + str(power) + " dBm"
-		return resp
+		print("Laser power set to " + str(power) + " dBm")
+		
 
 	def EnableLaser(self,state):
 		if state == True:
@@ -519,6 +519,7 @@ class ITLA_Class:
 		byte2 = (range&0xff00)>>8
 		self.SendReceive(WRITE,REG_Csweepamp,byte2,byte3)
 		logging.info("Sweep range set to " + str(range) + " GHz")
+		print("Sweep range set to " + str(range) + " GHz")
 
 	def SetSweepRate(self,rate):
 		#Specify range in MHz/s
@@ -526,6 +527,7 @@ class ITLA_Class:
 		byte2 = (rate&0xff00)>>8
 		self.SendReceive(WRITE,REG_Cscanf1,byte2,byte3)
 		logging.info("Sweep rate set to " + str(rate) + " MHz/s")
+		print("Sweep rate set to " + str(rate) + " MHz/s")
 
 	def EnableSweep(self,state):
 		if state == True:
