@@ -414,7 +414,7 @@ class ITLA_Class:
 	##############################################################################################################
 
 	def SetWavelength(self,wavelength):
-		#Specify wavelength in nm. Note the wavelength will the rounded to the nearest 0.1GHz
+		"""Specify wavelength in nm. Note the wavelength will the rounded to the nearest 0.1GHz"""
 		freq = round((2.99792*10**8/(wavelength*10**-9))*10**-12,4)
 		#Set THz register
 		freqTHz = int(freq)
@@ -439,8 +439,8 @@ class ITLA_Class:
 			logging.error("Failed to change laser frequency. Laser needs to be turned off")
 
 	def SetFrequency(self,freq):
-		#Specify wavelength in THz
-		#Set THz register
+		"""Specify wavelength in THz
+		Set THz register"""
 		freqTHz = int(freq)
 		THzbyte3 = freqTHz&0xff
 		THzbyte2 = (freqTHz&0xff00)>>8
