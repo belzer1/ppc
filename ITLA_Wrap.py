@@ -50,6 +50,7 @@ REG_Lfl1=0x52
 REG_Lfl2=0x53
 REG_Lfh1=0x54
 REG_Lfh2=0x55
+REG_Lgrid=0x56
 REG_Currents=0x57
 REG_Temps=0x58
 REG_Ftf=0x62
@@ -94,12 +95,24 @@ class ITLA_Class:
     def __init__(self,port,baudrate, com_type):
         if com_type == 'direct':
             self.sercon = self.ITLAConnect(port,baudrate)
+
         elif com_type == 'MCU':
             self.sercon = serial.Serial(port, baudrate)
             self.sercon.reset_input_buffer()
             self.sercon.reset_output_buffer()
         else:
             print("Enter 'direct' or 'MCU' when initialising laser")
+
+        self.min_frequency = self.SendReceive(READ,REG_Lfl1,0,0) + self.SendReceive(READ,REG_Lfl1,0,0)*0.0001
+        print('This lasers miminum frequency is {} THz'.format(self.min_frequency))
+        self.max_frequency = self.SendReceive(READ,REG_Lfh1,0,0) + self.SendReceive(READ,REG_Lfh1,0,0)*0.0001
+        print('This lasers maximum frequency is {} THz'.format(self.max_frequency))
+        self.min_power = self.SendReceive(READ,REG_Opsl,0,0)*0.01
+        print('This lasers minimum power is {} dBm'.format(self.min_power))
+        self.max_power = self.SendReceive(READ,REG_Opsh,0,0)*0.01
+        print('This lasers maximum power is {} dBm'.format(self.max_power))
+        self.min_grid = self.SendReceive(READ,REG_Lgrid,0,0)*0.1
+        print('This lasers minumum grid spacing is {} GHz'.format(self.min_grid))
 
     def stripString(self,inp):
         outp=''
@@ -484,6 +497,9 @@ class ITLA_Class:
         Returns:
             None
         """
+        if not self.min_frequency <= freq <= self.max_frequency:
+        	print("Requested frequency is outside this lasers range")
+        	return
         freqTHz = int(freq)
         THzbyte3 = freqTHz&0xff
         THzbyte2 = (freqTHz&0xff00)>>8
@@ -516,6 +532,10 @@ class ITLA_Class:
         Returns:
             None
         """
+        if not self.min_power <= power <= self.max_power:
+        	print("Requested frequency is outside this lasers range")
+        	return
+
         power_int = int(power*100)
         byte3 = power_int&0xff
         byte2 = (power_int&0xff00)>>8
@@ -608,6 +628,19 @@ class ITLA_Class:
         byte2 = (ftf_MHz&0xff00)>>8
         self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
         logging.info("Fine tune frequency set to " + str(ftf))
+
+    def SetChannel1(self):
+    	"""Makes sure the laser turns on in it's standard channel
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
+        self.SendReceive(WRITE,REG_Channel,0x00,0x01)
+        logging.info("Set to channel 1 to make sure laser comes on at FCF")
         
     ##############################################################################################################
     #   Functions for the Clean Sweep feature
@@ -716,7 +749,7 @@ class ITLA_Class:
         logging.info("Next jump frequency set to " + str(dataTHz) + "." + str(dataGHz) + " THz")
 
     def SetNextSled(self,sled):
-    	"""Set the next temperature seld to jump to, in degrees celcius
+    	"""Set the next temperature sled to jump to, in degrees celcius
         The temperature will the rounded to the nearest 0.01 C
 
         Args:
@@ -772,10 +805,19 @@ class ITLA_Class:
 
     ##############################################################################################################
     #   Functions for the Clean Scan feature
-    #   Note I haven't used these functions thoroughly so there might be bugs
+    	# Note you need a different firmware to use this functionality
     ##############################################################################################################
 
     def SetScanSled(self,sled):
+    	"""Set the sled temperature of the next sweep, in degrees celcius
+        The temperature will the rounded to the nearest 0.01 C
+
+        Args:
+            sled (float): The temperature in C
+
+        Returns:
+            None
+        """
         sled_temp = int(sled*1000)
         byte3 = sled_temp&0xff
         byte2 = (sled_temp&0xff00)>>8
@@ -783,6 +825,16 @@ class ITLA_Class:
         logging.info("Next scan sled set to " + str(sled) + " C")
 
     def SetFilter1(self,temp):
+    	"""Set filter 1 temperature of the next sweep, in degrees celcius
+    	Temperature is rounded to nearest 0.001 C
+
+        Args:
+            temp (float): The temperature in C
+
+        Returns:
+            None
+        """
+
         temp_temp = int((temp-50)*1000)
         byte3 = temp_temp&0xff
         byte2 = (temp_temp&0xff00)>>8
@@ -790,6 +842,16 @@ class ITLA_Class:
         logging.info("Filter 1 set to " + str(temp) + " C")
 
     def SetFilter2(self,temp):
+    	"""Set filter 1 temperature of the next sweep, in degrees celcius
+    	Temperature is rounded to nearest 0.001 C
+
+        Args:
+            temp (float): The temperature in C
+
+        Returns:
+            None
+        """
+
         temp_temp = int((temp-50)*1000)
         byte3 = temp_temp&0xff
         byte2 = (temp_temp&0xff00)>>8
@@ -797,18 +859,47 @@ class ITLA_Class:
         logging.info("Filter 2 set to " + str(temp) + " C")
 
     def SetCurrent(self,current):
+    	"""Set the current of the next sweep, in milliamps
+    	Current is rounded to nearest 0.1 mA
+
+        Args:
+            current (float): The current in mA
+
+        Returns:
+            None
+        """
+
         byte3 = current&0xff
         byte2 = (current&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscancurrent,byte2,byte3)
         logging.info("Current in centre of scan set to " + str(current) + " mA")
 
     def SetCurrentAdjust(self,adjust1,adjust2):
+	   	"""Set the current of the next sweep
+	   	I have no idea what the units are. mA?
+
+        Args:
+            adjust1 (float): Current adjust 1
+            adjust1 (float): Current adjust 2
+
+        Returns:
+            None
+        """
+
         byte3 = adjust2&0xff
         byte2 = adjust1&0xff
         self.SendReceive(WRITE,REG_Cscancurrentadjust,byte2,byte3)
         logging.info("Current adjust set to {}, {}".format(adjust1,adjust2))
 
     def EnableScan(self,state):
+    	"""Turn clean scan on/off
+
+        Args:
+            state (bool): True -> turn on scan. False -> turn off scan
+
+        Returns:
+            None
+        """
         if state == True:
             self.SendReceive(WRITE,REG_Cscanon,0x00,0x01)
             logging.info("Laser scan enabled")
@@ -819,20 +910,46 @@ class ITLA_Class:
             print("scan disabled")
 
     def SetScanAmplitude(self,freq):
+    	"""Set the amplitude of the continuous scan segments, in gigahertz
+    	Rounded to the nearest 1 GHz
+
+        Args:
+            current (freq): The scan amplitude in GHz
+
+        Returns:
+            None
+        """
+
         byte3 = freq&0xff
         byte2 = (freq&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscanamp,byte2,byte3)
         logging.info("Scan amplitude set to " + str(freq) + " GHz")
     
     def LockSled(self):
+    	"""Lock the sled temperature
+    	If clean mode is on, this this will instead start the clean scan
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         self.SendReceive(WRITE,REG_Cscanon,0x00,0x01)
         logging.info("Set sled temperature. If clean mode is on, this this will instead start the clean scan")
 
-    def SetChannel1(self):
-        self.SendReceive(WRITE,REG_Channel,0x00,0x01)
-        logging.info("Set to channel 1 to make sure laser comes on at FCF")
-
     def EnableCleanMode(self,state):
+    	"""Adjust laser frequency small amount, in GHz
+    	Rounded to nearest MHz
+
+        Args:
+            ftf (float): frequency adjustment in MHz
+
+        Returns:
+            None
+        """
+
         if state == True:
             self.SendReceive(WRITE,REG_Mode,0x00,0x01)
             logging.info("Clean mode enabled")
@@ -842,25 +959,42 @@ class ITLA_Class:
             logging.info("Clean mode disabled")
             print("Clean mode disabled")        
 
-    def IsSweeping(self):
-        #A function that reads 0xE5. If the responce is odd, then the laser is sweep. Else it is ready for next datapoints
-        resp = self.SendReceive(READ,REG_Csweepsena,0x00,0x00)
-        return resp%2
-
-    def ImportSequence(self):
-        with open('1dBm.csv','r') as csvfile:
-            reader = csv.reader(csvfile, delimiter=' ')
-            for row in reader:
-                power.append(float(row[0]))
-                frequency.append(float(row[1]))
-                current.append(float(row[2]))
-                adjust1.append(float(row[3]))
-                adjust2.append(float(row[4]))
-        return (power, frequency, current, adjust1, adjust2)
-
-
     def ScanStatus(self):
+    	"""Gives a full status update of where the laser is in the clean scan
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
+
         power = self.SendReceive(READ,REG_Oop,0x00,0x00)/100
+
+     	#The Reg_Sscanon (0xE5) register is rather involved:
+    	# Provides status information about the clean scan
+    	# bit 0 is set to 1 if the next setpoint has been loaded
+    	# bit 1 is set to 1 if the CleanScan is ongoing
+    	# bit 3 and 2 are 01 if the sweep is going to higher frequency
+    	# bit 3 and 2 are 10 if the sweep is going to lower frequency
+        resp = self.SendReceive(READ,REG_Cscanon,0x00,0x00)
+
+        mask1 = 0b0001
+    	mask2 = 0b0110
+
+    	if resp & mask1 == 1:
+    		loaded = True
+    	else
+    		loaded = False
+
+    	if ((resp & mask2)>>1) == 1:
+    		slope = "Increasing"
+    	elif ((resp & mask2)>>1) == 2:
+    		slope = "Decreasing"
+    	else:
+    		slope = "Error!"
+        
 
         #This is an AEA address, check the manual
         self.SendReceive(READ,0x58,0x00,0x00)       
@@ -878,7 +1012,7 @@ class ITLA_Class:
         # offset = (offset - 2000)*0.1
         offset =  1
 
-        print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,gainchip_temp,case_temp,offset))
+        print("Next point loaded: {}, slope: {}, {:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(loaded,slope,power,gainchip_temp,case_temp,offset))
 
 
     ##############################################################################################################

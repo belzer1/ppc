@@ -18,8 +18,8 @@ if __name__ == "__main__":
     ITLA.SetPower(10.0)
     #Set sweep range in GHz
     ITLA.SetSweepRange(120)
-    #Set sweep rare in MHZ/s
-    ITLA.SetSweepRate(20000)    
+    #Set sweep rare in GHZ/s
+    ITLA.SetSweepRate(20)    
     
     ITLA.EnableLaser(True)
     
