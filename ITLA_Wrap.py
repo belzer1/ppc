@@ -382,7 +382,16 @@ class ITLA_Class:
 
 
     def ProbeLaser(self):
-        """Checks the laser responds correctly to a zero input. It's a decent test to see if the laser is behaving."""
+        """Checks the laser responds correctly to a zero input
+        It's a decent test to see if the laser is behaving
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         self.Send_command(0x00,0x00,0x00,0x00)
         response = self.Receive_response()
         if response != (84, 0, 0, 16):
@@ -391,7 +400,19 @@ class ITLA_Class:
             sys.exit()
 
     def SendReceive(self,readwrite,register,byte2,byte3):
-        """This self.SendReceive command should be all you need if you want to manually address a known register"""
+        """This command should be all you need if you want to address a known register
+
+        Args:
+            readwrite (int): 
+            register (int):
+            byte2 (int):
+            byte3 (int):
+
+        Returns:
+            None
+        """
+
+        """"""
         #Bytes 2 and 3 contain the number value
         
         self.Send_command(*self.CommandWithChecksum(readwrite,register,byte2,byte3))
@@ -422,7 +443,7 @@ class ITLA_Class:
 
         Returns:
             None
-    """
+        """
         
         freq = round((2.99792*10**8/(wavelength*10**-9))*10**-12,4)
         #Set THz register
