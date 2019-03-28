@@ -376,8 +376,8 @@ class ITLA_Class:
         return(ord(input[teller])*256+ord(input[teller+1]))
 
     ##############################################################################################################
-    #   This is the beginning of function written by Matt Berrington. Functions prior to this are proivided by PurePhotonics
-    #   Functions you should only need if you want to manually address known registers for troubleshooting etc
+    #   This is the beginning of functions written by Matt Berrington. Functions prior to this are proivided by PurePhotonics
+    #   This section has functions you should only need if you want to manually address known registers for troubleshooting etc
     ##############################################################################################################
 
 
@@ -403,30 +403,36 @@ class ITLA_Class:
         """This command should be all you need if you want to address a known register
 
         Args:
-            readwrite (int): 
-            register (int):
-            byte2 (int):
-            byte3 (int):
+            readwrite (int): 0 = read, 1 = write
+            register (int): laser register to address
+            byte2 (int): first databyte to send
+            byte3 (int): second data byte to send
 
         Returns:
-            None
+            int: the value returned by the laser
         """
-
-        """"""
-        #Bytes 2 and 3 contain the number value
         
         self.Send_command(*self.CommandWithChecksum(readwrite,register,byte2,byte3))
         byte0, byte1, byte2, byte3 = self.Receive_response()
         response = (byte2 << 8) + byte3
         return response
 
-    def PrintHex(self,list):
-        HexList = []
-        for byte in list:
-            HexList.append((format(byte,'#02x')))
-        print(HexList)
-
     def CommandWithChecksum(self,byte0,byte1,byte2,byte3):
+        """Changes byte zero to include the checksum for communication
+
+        Args:
+            byte0 (int): the first byte, normally just 0 or 1 for read or write
+            byte1 (int): laser register to address
+            byte2 (int): first data byte to send
+            byte3 (int): second data byte to send
+
+        Returns:
+            int: byte0
+            int: byte1
+            int: byte2
+            int: byte3
+        """
+
         newbyte0 = (self.checksum(byte0,byte1,byte2,byte3)<<4) + byte0
         return newbyte0, byte1, byte2, byte3
 
@@ -436,7 +442,7 @@ class ITLA_Class:
 
     def SetWavelength(self,wavelength):
         """Set the laser wavelength in nm
-        The wavelength will the rounded to the nearest 0.1GHz
+        The wavelength will the rounded to the nearest 0.1 GHz
 
         Args:
             wavelength (float): The wavelength in nm
@@ -478,7 +484,6 @@ class ITLA_Class:
         Returns:
             None
         """
-        Set THz register
         freqTHz = int(freq)
         THzbyte3 = freqTHz&0xff
         THzbyte2 = (freqTHz&0xff00)>>8
@@ -544,7 +549,8 @@ class ITLA_Class:
             print('Laser is off')
 
     def WaitForLaser(self):
-        """Wait for the pending flag on the laser to drop. Useful for waiting until the laser locks.
+        """Wait for the pending flag on the laser to drop
+        Useful for waiting until the laser locks
 
         Args:
             None
@@ -587,6 +593,22 @@ class ITLA_Class:
             logging.info("Whisper mode disabled")
             time.sleep(0.5)
 
+    def FineTuneFrequency(self,ftf):
+    	"""Adjust laser frequency small amount, in GHz
+    	Rounded to nearest MHz
+
+        Args:
+            ftf (float): frequency adjustment in MHz
+
+        Returns:
+            None
+        """
+        ftf_MHz = int(ftf*1000)
+        byte3 = ftf_MHz&0xff
+        byte2 = (ftf_MHz&0xff00)>>8
+        self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
+        logging.info("Fine tune frequency set to " + str(ftf))
+        
     ##############################################################################################################
     #   Functions for the Clean Sweep feature
     ##############################################################################################################
@@ -669,6 +691,16 @@ class ITLA_Class:
     ##############################################################################################################
 
     def SetNextFrequency(self,freq):
+        """Set the next frequency to jump to, in THz
+        The frequency will the rounded to the nearest 0.1GHz
+
+        Args:
+            freq (float): The frequency in THz
+
+        Returns:
+            None
+        """
+
         #Set THz register
         freqTHz = int(freq)
         THzbyte3 = freqTHz&0xff
@@ -684,6 +716,15 @@ class ITLA_Class:
         logging.info("Next jump frequency set to " + str(dataTHz) + "." + str(dataGHz) + " THz")
 
     def SetNextSled(self,sled):
+    	"""Set the next temperature seld to jump to, in degrees celcius
+        The temperature will the rounded to the nearest 0.01 C
+
+        Args:
+            sled (float): The temperature in C
+
+        Returns:
+            None
+        """
         sled = int(sled*100)
         byte3 = sled&0xff
         byte2 = (sled&0xff00)>>8
@@ -691,6 +732,16 @@ class ITLA_Class:
         logging.info("Next jump sled set to " + str(datasled/100.0) + " C")
 
     def SetNextCurrent(self,current):
+    	"""Set the next current to jump to, in milliamps
+        The current will the rounded to the nearest 0.1 mA
+
+        Args:
+            sled (current): The current in mA
+
+        Returns:
+            None
+        """
+
         current = int(current*10)
         byte3 = current&0xff
         byte2 = (current&0xff00)>>8
@@ -698,6 +749,14 @@ class ITLA_Class:
         logging.info("Next jump current set to " + str(datacurrent/10.0) + " mA")
 
     def ExecuteJump(self):
+    	"""Execute jump
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         logging.info("Executing jump")
         print("Executing jump")
         #You need to send the command four times:
@@ -710,11 +769,6 @@ class ITLA_Class:
         self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
         self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
 
-    def FineTuneFrequency(self,ftf):
-        byte3 = ftf&0xff
-        byte2 = (ftf&0xff00)>>8
-        self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
-        logging.info("Fine tune frequency set to " + str(ftf))
 
     ##############################################################################################################
     #   Functions for the Clean Scan feature
