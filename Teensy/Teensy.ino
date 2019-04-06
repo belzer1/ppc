@@ -12,8 +12,9 @@ unsigned long previousMillis = 0;
 const long update_period = 100;
 
 boolean scanning = false;
-
 int ledPin = 13;
+int offsetAnalog = A21;
+int offsetFlag = 37;
 
 void setup() {
   
@@ -23,10 +24,11 @@ void setup() {
   // dont open serial port to LASER to keep it floating, so laser will talk to PC directly
 
   pinMode(ledPin, OUTPUT);
-  pinMode(15, OUTPUT);
+  pinMode(offsetFlag, OUTPUT);
+  digitalWrite(offsetFlag, LOW);
   
   analogWriteResolution(12);
-  analogWrite(A22,2000);
+  analogWrite(offsetAnalog,2000);
 }
 
 void wait_for_laser(){
@@ -187,18 +189,19 @@ void probe_offset(boolean pass_on) {
     PC.write(byte3);
   }
 
-  // calculate laser offset, encoding as ##### TO DO
-  int laser_offset = (byte2 << 8) + byte3; //this works for CleanScan
-//  if (laser_offset > 65535/2){
-//    laser_offset = laser_offset - 65535;
-//  }
-//  laser_offset = laser_offset + 2000; //this works for CleanSweep
+  // calculate laser offset
+  // offset during CleanSweep is encoded as (readout - 2000)*0.1GHz
+  int laser_offset = (byte2 << 8) + byte3;
+  if (laser_offset >= 1<<15){
+    laser_offset = laser_offset - (1<<16);
+  }
+  laser_offset = laser_offset + 2000; //this works for CleanSweep
   //  write result to analog pin for external monitoring
-  analogWrite(A22,laser_offset);
+  analogWrite(offsetAnalog,laser_offset);
   if (abs(laser_offset-2000)<500){
-    digitalWrite(15,HIGH);
+    digitalWrite(offsetFlag,HIGH);
   } else {
-    digitalWrite(15,LOW);
+    digitalWrite(offsetFlag,LOW);
   }
 }
 
@@ -226,6 +229,7 @@ void pass_on_to_LASER() {
     scanning = true;
   } else if(byte1 == 254) { //the signal to stop scan monitor mode
     scanning = false;
+    analogWrite(offsetAnalog,2000);
   } else {  
     LASER.write(byte0);
     LASER.write(byte1);

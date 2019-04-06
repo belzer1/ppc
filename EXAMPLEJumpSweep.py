@@ -5,8 +5,9 @@ import logging
 if __name__ == "__main__":  
     logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")                          
     
-    # ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
-    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM0",115200,'MCU')
+    ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU')
+#     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
+#    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM0",115200,'MCU')
 
     #Probe laser and check it's happy
     ITLA.ProbeLaser()
@@ -22,7 +23,13 @@ if __name__ == "__main__":
     ITLA.EnableWhisperMode(True)
     #DO SWEEP
     ITLA.EnableSweep(True)
-    time.sleep(100)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
     ITLA.EnableSweep(False)
     #DO JUMP
     ITLA.SetNextFrequency(195.55)
@@ -32,15 +39,159 @@ if __name__ == "__main__":
     ITLA.ExecuteJump()
     ITLA.WaitForLaser()
     time.sleep(3) #Recommended by Heino in case laser overshoots
-
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
+    ITLA.EnableSweep(True)
+    ITLA.EnableTeensyMonitor(True)
+    t = time.time()
+    while time.time()-t < 30:
+            if ITLA.sercon.inWaiting() > 0:
+                scan_status = ITLA.TeensyReadStatus()
+            time.sleep(0.0001)
+    ITLA.EnableTeensyMonitor(False)
+    ITLA.EnableSweep(False)
+    
     #turn everything off
     ITLA.EnableWhisperMode(False)
     ITLA.EnableLaser(False)
-
-
-
-
-
-
-
-
+    ITLA.sercon.close()

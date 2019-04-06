@@ -103,9 +103,9 @@ class ITLA_Class:
         else:
             print("Enter 'direct' or 'MCU' when initialising laser")
 
-        self.min_frequency = self.SendReceive(READ,REG_Lfl1,0,0) + self.SendReceive(READ,REG_Lfl1,0,0)*0.0001
-        print('This lasers miminum frequency is {} THz'.format(self.min_frequency))
-        self.max_frequency = self.SendReceive(READ,REG_Lfh1,0,0) + self.SendReceive(READ,REG_Lfh1,0,0)*0.0001
+        self.min_frequency = self.SendReceive(READ,REG_Lfl1,0,0) + self.SendReceive(READ,REG_Lfl2,0,0)*0.0001
+        print('This lasers minimum frequency is {} THz'.format(self.min_frequency))
+        self.max_frequency = self.SendReceive(READ,REG_Lfh1,0,0) + self.SendReceive(READ,REG_Lfh2,0,0)*0.0001
         print('This lasers maximum frequency is {} THz'.format(self.max_frequency))
         self.min_power = self.SendReceive(READ,REG_Opsl,0,0)*0.01
         print('This lasers minimum power is {} dBm'.format(self.min_power))
@@ -498,8 +498,8 @@ class ITLA_Class:
             None
         """
         if not self.min_frequency <= freq <= self.max_frequency:
-        	print("Requested frequency is outside this lasers range")
-        	return
+            print("Requested frequency is outside this lasers range")
+            return
         freqTHz = int(freq)
         THzbyte3 = freqTHz&0xff
         THzbyte2 = (freqTHz&0xff00)>>8
@@ -533,8 +533,8 @@ class ITLA_Class:
             None
         """
         if not self.min_power <= power <= self.max_power:
-        	print("Requested frequency is outside this lasers range")
-        	return
+            print("Requested frequency is outside this lasers range")
+            return
 
         power_int = int(power*100)
         byte3 = power_int&0xff
@@ -614,8 +614,8 @@ class ITLA_Class:
             time.sleep(0.5)
 
     def FineTuneFrequency(self,ftf):
-    	"""Adjust laser frequency small amount, in GHz
-    	Rounded to nearest MHz
+        """Adjust laser frequency small amount, in GHz
+        Rounded to nearest MHz
 
         Args:
             ftf (float): frequency adjustment in MHz
@@ -630,7 +630,7 @@ class ITLA_Class:
         logging.info("Fine tune frequency set to " + str(ftf))
 
     def SetChannel1(self):
-    	"""Makes sure the laser turns on in it's standard channel
+        """Makes sure the laser turns on in it's standard channel
 
         Args:
             None
@@ -749,7 +749,7 @@ class ITLA_Class:
         logging.info("Next jump frequency set to " + str(dataTHz) + "." + str(dataGHz) + " THz")
 
     def SetNextSled(self,sled):
-    	"""Set the next temperature sled to jump to, in degrees celcius
+        """Set the next temperature sled to jump to, in degrees celcius
         The temperature will the rounded to the nearest 0.01 C
 
         Args:
@@ -765,7 +765,7 @@ class ITLA_Class:
         logging.info("Next jump sled set to " + str(datasled/100.0) + " C")
 
     def SetNextCurrent(self,current):
-    	"""Set the next current to jump to, in milliamps
+        """Set the next current to jump to, in milliamps
         The current will the rounded to the nearest 0.1 mA
 
         Args:
@@ -782,7 +782,7 @@ class ITLA_Class:
         logging.info("Next jump current set to " + str(datacurrent/10.0) + " mA")
 
     def ExecuteJump(self):
-    	"""Execute jump
+        """Execute jump
 
         Args:
             None
@@ -805,11 +805,11 @@ class ITLA_Class:
 
     ##############################################################################################################
     #   Functions for the Clean Scan feature
-    	# Note you need a different firmware to use this functionality
+        # Note you need a different firmware to use this functionality
     ##############################################################################################################
 
     def SetScanSled(self,sled):
-    	"""Set the sled temperature of the next sweep, in degrees celcius
+        """Set the sled temperature of the next sweep, in degrees celcius
         The temperature will the rounded to the nearest 0.01 C
 
         Args:
@@ -825,8 +825,8 @@ class ITLA_Class:
         logging.info("Next scan sled set to " + str(sled) + " C")
 
     def SetFilter1(self,temp):
-    	"""Set filter 1 temperature of the next sweep, in degrees celcius
-    	Temperature is rounded to nearest 0.001 C
+        """Set filter 1 temperature of the next sweep, in degrees celcius
+        Temperature is rounded to nearest 0.001 C
 
         Args:
             temp (float): The temperature in C
@@ -842,8 +842,8 @@ class ITLA_Class:
         logging.info("Filter 1 set to " + str(temp) + " C")
 
     def SetFilter2(self,temp):
-    	"""Set filter 1 temperature of the next sweep, in degrees celcius
-    	Temperature is rounded to nearest 0.001 C
+        """Set filter 1 temperature of the next sweep, in degrees celcius
+        Temperature is rounded to nearest 0.001 C
 
         Args:
             temp (float): The temperature in C
@@ -859,8 +859,8 @@ class ITLA_Class:
         logging.info("Filter 2 set to " + str(temp) + " C")
 
     def SetCurrent(self,current):
-    	"""Set the current of the next sweep, in milliamps
-    	Current is rounded to nearest 0.1 mA
+        """Set the current of the next sweep, in milliamps
+        Current is rounded to nearest 0.1 mA
 
         Args:
             current (float): The current in mA
@@ -875,8 +875,8 @@ class ITLA_Class:
         logging.info("Current in centre of scan set to " + str(current) + " mA")
 
     def SetCurrentAdjust(self,adjust1,adjust2):
-	   	"""Set the current of the next sweep
-	   	I have no idea what the units are. mA?
+        """Set the current of the next sweep
+        I have no idea what the units are. mA?
 
         Args:
             adjust1 (float): Current adjust 1
@@ -892,7 +892,7 @@ class ITLA_Class:
         logging.info("Current adjust set to {}, {}".format(adjust1,adjust2))
 
     def EnableScan(self,state):
-    	"""Turn clean scan on/off
+        """Turn clean scan on/off
 
         Args:
             state (bool): True -> turn on scan. False -> turn off scan
@@ -910,8 +910,8 @@ class ITLA_Class:
             print("scan disabled")
 
     def SetScanAmplitude(self,freq):
-    	"""Set the amplitude of the continuous scan segments, in gigahertz
-    	Rounded to the nearest 1 GHz
+        """Set the amplitude of the continuous scan segments, in gigahertz
+        Rounded to the nearest 1 GHz
 
         Args:
             current (freq): The scan amplitude in GHz
@@ -926,8 +926,8 @@ class ITLA_Class:
         logging.info("Scan amplitude set to " + str(freq) + " GHz")
     
     def LockSled(self):
-    	"""Lock the sled temperature
-    	If clean mode is on, this this will instead start the clean scan
+        """Lock the sled temperature
+        If clean mode is on, this this will instead start the clean scan
 
         Args:
             None
@@ -940,8 +940,8 @@ class ITLA_Class:
         logging.info("Set sled temperature. If clean mode is on, this this will instead start the clean scan")
 
     def EnableCleanMode(self,state):
-    	"""Adjust laser frequency small amount, in GHz
-    	Rounded to nearest MHz
+        """Adjust laser frequency small amount, in GHz
+        Rounded to nearest MHz
 
         Args:
             ftf (float): frequency adjustment in MHz
@@ -960,7 +960,7 @@ class ITLA_Class:
             print("Clean mode disabled")        
 
     def ScanStatus(self):
-    	"""Gives a full status update of where the laser is in the clean scan
+        """Gives a full status update of where the laser is in the clean scan
 
         Args:
             None
@@ -972,28 +972,28 @@ class ITLA_Class:
 
         power = self.SendReceive(READ,REG_Oop,0x00,0x00)/100
 
-     	#The Reg_Sscanon (0xE5) register is rather involved:
-    	# Provides status information about the clean scan
-    	# bit 0 is set to 1 if the next setpoint has been loaded
-    	# bit 1 is set to 1 if the CleanScan is ongoing
-    	# bit 3 and 2 are 01 if the sweep is going to higher frequency
-    	# bit 3 and 2 are 10 if the sweep is going to lower frequency
+        #The Reg_Sscanon (0xE5) register is rather involved:
+        # Provides status information about the clean scan
+        # bit 0 is set to 1 if the next setpoint has been loaded
+        # bit 1 is set to 1 if the CleanScan is ongoing
+        # bit 3 and 2 are 01 if the sweep is going to higher frequency
+        # bit 3 and 2 are 10 if the sweep is going to lower frequency
         resp = self.SendReceive(READ,REG_Cscanon,0x00,0x00)
 
         mask1 = 0b0001
-    	mask2 = 0b0110
+        mask2 = 0b0110
 
-    	if resp & mask1 == 1:
-    		loaded = True
-    	else
-    		loaded = False
+        if resp & mask1 == 1:
+            loaded = True
+        else:
+            loaded = False
 
-    	if ((resp & mask2)>>1) == 1:
-    		slope = "Increasing"
-    	elif ((resp & mask2)>>1) == 2:
-    		slope = "Decreasing"
-    	else:
-    		slope = "Error!"
+        if ((resp & mask2)>>1) == 1:
+            slope = "Increasing"
+        elif ((resp & mask2)>>1) == 2:
+            slope = "Decreasing"
+        else:
+            slope = "Error!"
         
 
         #This is an AEA address, check the manual
@@ -1046,43 +1046,45 @@ class ITLA_Class:
     def TeensyReadStatus(self):
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 66:
-            print('Error! I expected to read the power level but instead got a response from register ' + byte1)
+            print('Error! I expected to read the power level but instead got a response from register ' + str(byte1))
             logging.error("Expected register 66, got " + byte1)
         power = ((byte2 << 8) + byte3)/100
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
-            print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+            print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
             logging.error("Expected register 11, got " + byte1)
         laser_temperature = ((byte2 << 8) + byte3)/100
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
-            print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+            print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
             logging.error("Expected register 11, got " + byte1)
         case_temperature = ((byte2 << 8) + byte3)/100
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
-            print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+            print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
             logging.error("Expected register 11, got " + byte1)
         laser_current = (byte2 << 8) + byte3
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
-            print('Error! I expected to read the AEA but instead got a response from register ' + byte1)
+            print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
             logging.error("Expected register 11, got " + byte1)
         TEC_current = (byte2 << 8) + byte3
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 230:
-            print('Error! I expected to read the frequency offset but instead got a response from register ' + byte1)
+            print('Error! I expected to read the frequency offset but instead got a response from register ' + str(byte1))
             logging.error("Expected register 230, got " + byte1)
-        offset = ((byte2 << 8) + byte3 - 2000)*0.1
+        offset = ((byte2 << 8) + byte3 - 2000)*0.1  #encoding for CleanScan
+        offset = (unsigned_to_signed((byte2 << 8) + byte3))*0.1  #encoding for CleanSweep
+        
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 229:
-            print('Error! I expected to read the scan status but instead got a response from register ' + byte1)
+            print('Error! I expected to read the scan status but instead got a response from register ' + str(byte1))
             logging.error("Expected register 229, got " + byte1)
         scan_status = (byte2 << 8) + byte3
 
@@ -1099,3 +1101,12 @@ class ITLA_Class:
             self.Send_command(254,254,254,254)
             print("taking teensy out of monitor mode")
             logging.info("Taking teensy out of monitor mode")
+    
+def unsigned_to_signed(num):
+    if 0 <= num < 2**15:
+        ret = num
+    elif 2**15 <= num <= 2**16:
+        ret = (num-2**16)
+    else:
+        print('Error! input it outside the range of a 2 byte number')
+    return ret
