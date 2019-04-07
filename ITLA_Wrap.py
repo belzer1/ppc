@@ -1090,7 +1090,7 @@ class ITLA_Class:
 
         print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,laser_temperature,case_temperature,offset))
 
-        return scan_status
+        return scan_status, offset
 
     def EnableTeensyMonitor(self,state):
         if state == True:
