@@ -228,7 +228,11 @@ void pass_on_to_LASER() {
   if(byte1 == 255){ //the signal to start scan monitor mode
     scanning = true;
   } else if(byte1 == 254) { //the signal to stop scan monitor mode
-    scanning = false;
+    delay(100);
+    while(LASER.available()>0){
+      char t = LASER.read();
+      delay(10);
+    }
     analogWrite(offsetAnalog,2000);
   } else {  
     LASER.write(byte0);

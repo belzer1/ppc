@@ -700,7 +700,6 @@ class ITLA_Class:
             self.SendReceive(WRITE,REG_Csweepsena,0x00,0x00)
             logging.info("Laser sweep disabled")
             print("Sweep disabled")
-            self.WaitForLaser()
 
     def ReadOffsetFreq(self):
         """Reads laser current frequency offset
@@ -802,6 +801,18 @@ class ITLA_Class:
         self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
         self.SendReceive(WRITE,REG_Cjumpon,0x00,0x01)
 
+    def ReadError(self):
+        """Reads error from target jump frequency
+
+        Args:
+            None
+
+        Returns:
+            float: the error in GHz
+        """
+        error = self.SendReceive(READ,REG_Cjumpoffset,0x00,0x00)
+        error = unsigned_to_signed(error)*0.1 
+        return error
 
     ##############################################################################################################
     #   Functions for the Clean Scan feature

@@ -1,6 +1,8 @@
 import ITLA_Wrap
 import time
 import logging
+import csv 
+
 
 def sweep_with_monitor():
     ITLA.EnableSweep(True)
@@ -9,18 +11,18 @@ def sweep_with_monitor():
     previous_slope = 0
     sweep_counter = -1   #start counter at -1 so I don't count the starting of the sweep as it turning around
     while sweep_counter<1:
-            if ITLA.sercon.inWaiting() > 0:
-                scan_status, current_offset = ITLA.TeensyReadStatus()
-                
-                if current_offset - previous_offset > 0: #if frequency is increasing
-                    if previous_slope <= 0: #if previously was non-increasing
-                        sweep_counter +=1
-                previous_slope = current_offset - previous_offset
-                print(scan_status)
-            time.sleep(0.00001)
+        if ITLA.sercon.inWaiting() > 0:
+            scan_status, current_offset = ITLA.TeensyReadStatus()
+            
+            if current_offset - previous_offset > 0: #if frequency is increasing
+                if previous_slope <= 0: #if previously was non-increasing
+                    sweep_counter +=1
+            previous_slope = current_offset - previous_offset
+            previous_offset = current_offset
+        time.sleep(0.00001)
     ITLA.EnableTeensyMonitor(False)
     ITLA.EnableSweep(False)
-    time.sleep(1)
+    time.sleep(10)
     # clear anything send my the teensy that snuck through because of timing mismatch
     while ITLA.sercon.inWaiting():
         ITLA.sercon.read(1)
@@ -60,44 +62,56 @@ class CleanScanParameters:
 
 
 if __name__ == "__main__":  
-    logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")                          
+    try:
+        logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")                          
     
-    ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU')
-#     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
-#    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM0",115200,'MCU')
-    
-    CleanScan = CleanScanParameters('10.0dBm')
-    CleanScan.set_frequency_range(195,196)
-
-    #Probe laser and check it's happy
-    ITLA.ProbeLaser()
-    #Turn laser off before setting frequency is easiest
-    ITLA.EnableLaser(False)
-    #Set frequency in THz
-    ITLA.SetFrequency(195.50)
-    #Set power in dBm
-    ITLA.SetPower(10.0)
-    ITLA.SetSweepRange(120)
-    ITLA.SetSweepRate(10)    
-    ITLA.EnableLaser(True)
-    ITLA.EnableWhisperMode(True)
-    
-    for idx, _ in enumerate(CleanScan.frequency):
-        print('Jumping to {} THz'.format(freq))
-        ITLA.SetNextFrequency(CleanScan.frequency[idx])
-        ITLA.SetNextSled(CleanScan.sled[idx])
-        ITLA.SetNextCurrent(CleanScan.current[idx])
-        ITLA.FineTuneFrequency(0)
-        ITLA.ExecuteJump()
-        ITLA.WaitForLaser()
-        time.sleep(3) #Recommended by Heino in case laser overshoots
-       
-        #Adding some triggering of scopes here would be a good idea
+        ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU')
+    #     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
+    #    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM0",115200,'MCU')
         
-        sweep_with_monitor()
-
+        CleanScan = CleanScanParameters('10.0dBm')
+        CleanScan.set_frequency_range(195,195.2)
     
-    #turn everything off
-    ITLA.EnableWhisperMode(False)
-    ITLA.EnableLaser(False)
-    ITLA.sercon.close()
+        #Probe laser and check it's happy
+        ITLA.ProbeLaser()
+        #Turn laser off before setting frequency is easiest
+        ITLA.EnableLaser(False)
+        #Set frequency in THz
+        ITLA.SetFrequency(195.50)
+        #Set power in dBm
+        ITLA.SetPower(10.0)
+        ITLA.SetSweepRange(120)
+        ITLA.SetSweepRate(10)    
+        ITLA.EnableLaser(True)
+        ITLA.EnableWhisperMode(True)
+        
+        for idx, _ in enumerate(CleanScan.frequency):            
+            print('Jumping to {} THz'.format(CleanScan.frequency[idx]))
+            ITLA.SetNextFrequency(CleanScan.frequency[idx])
+            ITLA.SetNextSled(CleanScan.sled[idx])
+            print(CleanScan.sled[idx])
+            ITLA.SetNextCurrent(CleanScan.current[idx])
+#            ITLA.FineTuneFrequency(0)
+            ITLA.ExecuteJump()
+            while True:
+                error = ITLA.ReadError()
+                print(ITLA.ReadTemp())
+                if abs(error) == 0.0:
+                    break
+                time.sleep(0.001)
+
+            time.sleep(3) #3 secs recommended by Heino in case laser overshoots
+           
+            sweep_with_monitor()
+            #Adding some triggering of scopes here would be a good idea
+            
+            
+    
+        
+        #turn everything off
+        ITLA.EnableWhisperMode(False)
+        ITLA.EnableLaser(False)
+        ITLA.sercon.close()
+    except Exception as err:
+        print(err)
+        ITLA.sercon.close()
