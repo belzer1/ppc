@@ -92,7 +92,11 @@ _error=ITLA_NOERROR
 seriallock=0
 
 class ITLA_Class:
-    def __init__(self,port,baudrate, com_type):
+    def __init__(self,port,baudrate, com_type, general_logger,lasercomms_logger):
+        
+        self.SetLoggers(general_logger,lasercomms_logger)
+            
+            
         if com_type == 'direct':
             self.sercon = self.ITLAConnect(port,baudrate)
 
@@ -158,7 +162,7 @@ class ITLA_Class:
         self.sercon.write(b1)
         self.sercon.write(b2)
         self.sercon.write(b3)
-        logging.info("Sent {}, {}, {}, {}".format(byte0, byte1, byte2, byte3))
+        self.lasercomms_logger.info("Sent {}, {}, {}, {}".format(byte0, byte1, byte2, byte3))
 
 
     def Receive_response(self):
@@ -184,7 +188,7 @@ class ITLA_Class:
             _error=byte0&0x03
             # print('Receiving:')
             # print(byte0,byte1,byte2,byte3)
-            logging.info("Receive {}, {}, {}, {}".format(byte0, byte1, byte2, byte3))
+            self.lasercomms_logger.info("Receive {}, {}, {}, {}".format(byte0, byte1, byte2, byte3))
             return(byte0,byte1,byte2,byte3)
         else:
             _error=ITLA_CSERROR
@@ -482,10 +486,10 @@ class ITLA_Class:
         GHz = self.SendReceive(READ,REG_Fcf2,0,0)
         if THz == freqTHz and GHz == freqGHz:
             print('Frequency set to ' + str(freqTHz) + '.' + str(freqGHz) + ' THz')
-            logging.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
+            self.general_logger.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
         else:
             print('Failed to change laser frequency. Laser needs to be turned off')
-            logging.error("Failed to change laser frequency. Laser needs to be turned off")
+            self.general_logger.error("Failed to change laser frequency. Laser needs to be turned off")
 
     def SetFrequency(self,freq):
         """Set the laser frequency in THz
@@ -517,10 +521,10 @@ class ITLA_Class:
         GHz = self.SendReceive(READ,REG_Fcf2,0,0)
         if THz == freqTHz and GHz == freqGHz:
             print('Frequency set to ' + str(freqTHz) + '.' + str(freqGHz) + ' THz')
-            logging.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
+            self.general_logger.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
         else:
             print('Failed to change laser frequency. Laser needs to be turned off')
-            logging.error("Failed to change laser frequency. Laser needs to be turned off")
+            self.general_logger.error("Failed to change laser frequency. Laser needs to be turned off")
 
     def SetPower(self,power):
         """Set the laser power in dBm
@@ -540,7 +544,7 @@ class ITLA_Class:
         byte3 = power_int&0xff
         byte2 = (power_int&0xff00)>>8
         resp = self.SendReceive(WRITE,REG_Power,byte2,byte3)
-        logging.info("Laser power set to " + str(power) + " dBm")
+        self.general_logger.info("Laser power set to " + str(power) + " dBm")
         print("Laser power set to " + str(power) + " dBm")
         
 
@@ -556,15 +560,15 @@ class ITLA_Class:
         """
 
         if state == True:
-            logging.info("Turning on laser...")
+            self.general_logger.info("Turning on laser...")
             self.SendReceive(WRITE,REG_Resena,0x00,0x08)
             print('Please wait, laser is turning on...')
             self.WaitForLaser()
-            logging.info("Laser is on")
+            self.general_logger.info("Laser is on")
             print('Laser is on')
         else:
             self.SendReceive(WRITE,REG_Resena,0x00,0x00)
-            logging.info("Laser disabled")
+            self.general_logger.info("Laser disabled")
             self.WaitForLaser()
             print('Laser is off')
 
@@ -605,12 +609,12 @@ class ITLA_Class:
         if state == True:
             self.SendReceive(WRITE,REG_Mode,0x00,0x02)
             print("Whisper mode enabled")
-            logging.info("Whisper mode enabled")
+            self.general_logger.info("Whisper mode enabled")
             time.sleep(0.5)
         else:
             self.SendReceive(WRITE,REG_Mode,0x00,0x00)
             print("Whisper mode disabled")
-            logging.info("Whisper mode disabled")
+            self.general_logger.info("Whisper mode disabled")
             time.sleep(0.5)
 
     def FineTuneFrequency(self,ftf):
@@ -627,7 +631,7 @@ class ITLA_Class:
         byte3 = ftf_MHz&0xff
         byte2 = (ftf_MHz&0xff00)>>8
         self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
-        logging.info("Fine tune frequency set to " + str(ftf))
+        self.general_logger.info("Fine tune frequency set to " + str(ftf))
 
     def SetChannel1(self):
         """Makes sure the laser turns on in it's standard channel
@@ -640,7 +644,7 @@ class ITLA_Class:
         """
 
         self.SendReceive(WRITE,REG_Channel,0x00,0x01)
-        logging.info("Set to channel 1 to make sure laser comes on at FCF")
+        self.general_logger.info("Set to channel 1 to make sure laser comes on at FCF")
         
     ##############################################################################################################
     #   Functions for the Clean Sweep feature
@@ -660,7 +664,7 @@ class ITLA_Class:
         byte3 = range&0xff
         byte2 = (range&0xff00)>>8
         self.SendReceive(WRITE,REG_Csweepamp,byte2,byte3)
-        logging.info("Sweep range set to " + str(range) + " GHz")
+        self.general_logger.info("Sweep range set to " + str(range) + " GHz")
         print("Sweep range set to " + str(range) + " GHz")
 
     def SetSweepRate(self,rate):
@@ -678,7 +682,7 @@ class ITLA_Class:
         byte3 = rateMHz&0xff
         byte2 = (rateMHz&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscanf1,byte2,byte3)
-        logging.info("Sweep rate set to " + str(rate) + " GHz/s")
+        self.general_logger.info("Sweep rate set to " + str(rate) + " GHz/s")
         print("Sweep rate set to " + str(rate) + " GHz/s")
 
     def EnableSweep(self,state):
@@ -694,11 +698,11 @@ class ITLA_Class:
 
         if state == True:
             self.SendReceive(WRITE,REG_Csweepsena,0x00,0x01)
-            logging.info("Laser sweep enabled")
+            self.general_logger.info("Laser sweep enabled")
             print("Sweep enabled")
         else:
             self.SendReceive(WRITE,REG_Csweepsena,0x00,0x00)
-            logging.info("Laser sweep disabled")
+            self.general_logger.info("Laser sweep disabled")
             print("Sweep disabled")
 
     def ReadOffsetFreq(self):
@@ -745,7 +749,7 @@ class ITLA_Class:
         GHzbyte2 = (freqGHz&0xff00)>>8
         dataGHz = self.SendReceive(WRITE,REG_CjumpGHz,GHzbyte2,GHzbyte3)
         print('Next jump frequency set to ' + str(dataTHz) + '.' + str(dataGHz) + ' THz')
-        logging.info("Next jump frequency set to " + str(dataTHz) + "." + str(dataGHz) + " THz")
+        self.general_logger.info("Next jump frequency set to " + str(dataTHz) + "." + str(dataGHz) + " THz")
 
     def SetNextSled(self,sled):
         """Set the next temperature sled to jump to, in degrees celcius
@@ -761,7 +765,7 @@ class ITLA_Class:
         byte3 = sled&0xff
         byte2 = (sled&0xff00)>>8
         datasled = self.SendReceive(WRITE,REG_CjumpSled,byte2,byte3)
-        logging.info("Next jump sled set to " + str(datasled/100.0) + " C")
+        self.general_logger.info("Next jump sled set to " + str(datasled/100.0) + " C")
 
     def SetNextCurrent(self,current):
         """Set the next current to jump to, in milliamps
@@ -778,7 +782,7 @@ class ITLA_Class:
         byte3 = current&0xff
         byte2 = (current&0xff00)>>8
         datacurrent = self.SendReceive(WRITE,REG_CjumpCurrent,byte2,byte3)
-        logging.info("Next jump current set to " + str(datacurrent/10.0) + " mA")
+        self.general_logger.info("Next jump current set to " + str(datacurrent/10.0) + " mA")
 
     def ExecuteJump(self):
         """Execute jump
@@ -789,7 +793,7 @@ class ITLA_Class:
         Returns:
             None
         """
-        logging.info("Executing jump")
+        self.general_logger.info("Executing jump")
         print("Executing jump")
         #You need to send the command four times:
         #First transfers frequency, temperature and current to memory
@@ -813,6 +817,24 @@ class ITLA_Class:
         error = self.SendReceive(READ,REG_Cjumpoffset,0x00,0x00)
         error = unsigned_to_signed(error)*0.1 
         return error
+    
+    def WaitForJump(self, threshold):
+        """Wait until the error after a jump is within a threshold of the target frequency
+
+        Args:
+            threshold (float): the threshold in GHz
+
+        Returns:
+            None
+        """
+        while True:
+                    error = self.ReadError()
+                    if abs(error) <= 1.0:
+                        print('Locked at a temperature of {} C'.format(self.ReadTemp()))
+                        self.general_logger.info('Locked at a temperature of {} C'.format(self.ReadTemp()))
+                        
+                        break
+                    time.sleep(0.1)
 
     ##############################################################################################################
     #   Functions for the Clean Scan feature
@@ -833,7 +855,7 @@ class ITLA_Class:
         byte3 = sled_temp&0xff
         byte2 = (sled_temp&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscansled,byte2,byte3)
-        logging.info("Next scan sled set to " + str(sled) + " C")
+        self.general_logger.info("Next scan sled set to " + str(sled) + " C")
 
     def SetFilter1(self,temp):
         """Set filter 1 temperature of the next sweep, in degrees celcius
@@ -850,7 +872,7 @@ class ITLA_Class:
         byte3 = temp_temp&0xff
         byte2 = (temp_temp&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscanf1,byte2,byte3)
-        logging.info("Filter 1 set to " + str(temp) + " C")
+        self.general_logger.info("Filter 1 set to " + str(temp) + " C")
 
     def SetFilter2(self,temp):
         """Set filter 1 temperature of the next sweep, in degrees celcius
@@ -867,7 +889,7 @@ class ITLA_Class:
         byte3 = temp_temp&0xff
         byte2 = (temp_temp&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscanf2,byte2,byte3)
-        logging.info("Filter 2 set to " + str(temp) + " C")
+        self.general_logger.info("Filter 2 set to " + str(temp) + " C")
 
     def SetCurrent(self,current):
         """Set the current of the next sweep, in milliamps
@@ -879,28 +901,29 @@ class ITLA_Class:
         Returns:
             None
         """
-
+        current = int(current*10)
         byte3 = current&0xff
         byte2 = (current&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscancurrent,byte2,byte3)
-        logging.info("Current in centre of scan set to " + str(current) + " mA")
+        self.general_logger.info("Current in centre of scan set to " + str(current) + " mA")
 
     def SetCurrentAdjust(self,adjust1,adjust2):
-        """Set the current of the next sweep
-        I have no idea what the units are. mA?
+        """Set the current of the next sweep, in milliamps
+        Current is rounded to nearest 0.1 mA
 
         Args:
             adjust1 (float): Current adjust 1
-            adjust1 (float): Current adjust 2
+            adjust2 (float): Current adjust 2
 
         Returns:
             None
         """
-
+        adjust1 = int(adjust1*10)
+        adjust2 = int(adjust2*10)
         byte3 = adjust2&0xff
         byte2 = adjust1&0xff
         self.SendReceive(WRITE,REG_Cscancurrentadjust,byte2,byte3)
-        logging.info("Current adjust set to {}, {}".format(adjust1,adjust2))
+        self.general_logger.info("Current adjust set to {}, {}".format(adjust1,adjust2))
 
     def EnableScan(self,state):
         """Turn clean scan on/off
@@ -913,11 +936,11 @@ class ITLA_Class:
         """
         if state == True:
             self.SendReceive(WRITE,REG_Cscanon,0x00,0x01)
-            logging.info("Laser scan enabled")
+            self.general_logger.info("Laser scan enabled")
             print("scan enabled")
         else:
             self.SendReceive(WRITE,REG_Cscanon,0x00,0x00)
-            logging.info("Laser scan disabled")
+            self.general_logger.info("Laser scan disabled")
             print("scan disabled")
 
     def SetScanAmplitude(self,freq):
@@ -934,7 +957,7 @@ class ITLA_Class:
         byte3 = freq&0xff
         byte2 = (freq&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscanamp,byte2,byte3)
-        logging.info("Scan amplitude set to " + str(freq) + " GHz")
+        self.general_logger.info("Scan amplitude set to " + str(freq) + " GHz")
     
     def LockSled(self):
         """Lock the sled temperature
@@ -948,7 +971,7 @@ class ITLA_Class:
         """
 
         self.SendReceive(WRITE,REG_Cscanon,0x00,0x01)
-        logging.info("Set sled temperature. If clean mode is on, this this will instead start the clean scan")
+        self.general_logger.info("Set sled temperature. If clean mode is on, this this will instead start the clean scan")
 
     def EnableCleanMode(self,state):
         """Adjust laser frequency small amount, in GHz
@@ -963,11 +986,11 @@ class ITLA_Class:
 
         if state == True:
             self.SendReceive(WRITE,REG_Mode,0x00,0x01)
-            logging.info("Clean mode enabled")
+            self.general_logger.info("Clean mode enabled")
             print("Clean mode enabled")
         else:
             self.SendReceive(WRITE,REG_Mode,0x00,0x00)
-            logging.info("Clean mode disabled")
+            self.general_logger.info("Clean mode disabled")
             print("Clean mode disabled")        
 
     def ScanStatus(self):
@@ -1034,20 +1057,20 @@ class ITLA_Class:
         #I think this reads laser temperature
         data = self.SendReceive(READ,0x43,0x00,0x00)
         data = data*0.01
-        logging.info("Laser temperature is " + str(data))
+        self.general_logger.info("Laser temperature is " + str(data))
         return data
 
     def ReadDeviceTemp(self):
         #This reads the 'device temperature' instead of the 'laser temperature'. I'm unsure what the difference is
         data = self.SendReceive(READ,0x58,0x00,0x00)
         data = data
-        logging.info("Device temperature is " + str(data))
+        self.general_logger.info("Device temperature is " + str(data))
         return data
 
     def ReadDeviceCurrent(self):
         data = self.SendReceive(READ,0x57,0x00,0x00)
         data = data
-        logging.info("Device current is " + str(data))
+        self.general_logger.info("Device current is " + str(data))
         return data
 
     ##############################################################################################################
@@ -1058,37 +1081,37 @@ class ITLA_Class:
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 66:
             print('Error! I expected to read the power level but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 66, got " + byte1)
+            self.general_logger.error("Expected register 66, got " + byte1)
         power = ((byte2 << 8) + byte3)/100
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
             print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 11, got " + byte1)
+            self.general_logger.error("Expected register 11, got " + byte1)
         laser_temperature = ((byte2 << 8) + byte3)/100
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
             print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 11, got " + byte1)
+            self.general_logger.error("Expected register 11, got " + byte1)
         case_temperature = ((byte2 << 8) + byte3)/100
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
             print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 11, got " + byte1)
+            self.general_logger.error("Expected register 11, got " + byte1)
         laser_current = (byte2 << 8) + byte3
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 11:
             print('Error! I expected to read the AEA but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 11, got " + byte1)
+            self.general_logger.error("Expected register 11, got " + byte1)
         TEC_current = (byte2 << 8) + byte3
 
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 230:
             print('Error! I expected to read the frequency offset but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 230, got " + byte1)
+            self.general_logger.error("Expected register 230, got " + byte1)
         offset = ((byte2 << 8) + byte3 - 2000)*0.1  #encoding for CleanScan
         offset = (unsigned_to_signed((byte2 << 8) + byte3))*0.1  #encoding for CleanSweep
         
@@ -1096,7 +1119,7 @@ class ITLA_Class:
         byte0, byte1, byte2, byte3 = self.Receive_response()
         if byte1 != 229:
             print('Error! I expected to read the scan status but instead got a response from register ' + str(byte1))
-            logging.error("Expected register 229, got " + byte1)
+            self.general_logger.error("Expected register 229, got " + byte1)
         scan_status = (byte2 << 8) + byte3
 
         print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,laser_temperature,case_temperature,offset))
@@ -1107,11 +1130,16 @@ class ITLA_Class:
         if state == True:
             self.Send_command(255,255,255,255)
             print("Putting teensy in to monitor mode")
-            logging.info("Putting teensy in to monitor mode")
+            self.general_logger.info("Putting teensy in to monitor mode")
         else:
             self.Send_command(254,254,254,254)
             print("taking teensy out of monitor mode")
-            logging.info("Taking teensy out of monitor mode")
+            self.general_logger.info("Taking teensy out of monitor mode")
+            
+    
+    def SetLoggers(self,general_logger,lasercomms_logger):
+        self.general_logger = general_logger
+        self.lasercomms_logger = lasercomms_logger
     
 def unsigned_to_signed(num):
     if 0 <= num < 2**15:
