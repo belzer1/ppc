@@ -15,6 +15,7 @@ boolean scanning = false;
 int ledPin = 13;
 int offsetAnalog = A21;
 int offsetFlag = 37;
+int flag_range = 120; //GHz
 
 void setup() {
   
@@ -198,7 +199,9 @@ void probe_offset(boolean pass_on) {
   laser_offset = laser_offset + 2000; //this works for CleanSweep
   //  write result to analog pin for external monitoring
   analogWrite(offsetAnalog,laser_offset);
-  if (abs(laser_offset-2000)<500){
+
+  
+  if (abs(laser_offset-2000)<flag_range*5){
     digitalWrite(offsetFlag,HIGH);
   } else {
     digitalWrite(offsetFlag,LOW);
