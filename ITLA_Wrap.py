@@ -99,7 +99,6 @@ class ITLA_Class:
             
         if com_type == 'direct':
             self.sercon = self.ITLAConnect(port,baudrate)
-
         elif com_type == 'MCU':
             self.sercon = serial.Serial(port, baudrate)
             self.sercon.reset_input_buffer()
@@ -721,6 +720,29 @@ class ITLA_Class:
         (data - 2000)*0.1
         return data
 
+    def SweepWithMonitor(self, num_sweeps):
+        self.EnableSweep(True)
+        self.EnableTeensyMonitor(True)
+        previous_offset = 0
+        previous_slope = 0
+        sweep_counter = -1   #start counter at -1 so I don't count the starting of the sweep as it turning around
+        while sweep_counter < num_sweeps:
+            if self.sercon.inWaiting() > 0:
+                scan_status, current_offset = self.TeensyReadStatus()
+                
+                if current_offset - previous_offset > 0: #if frequency is increasing
+                    if previous_slope <= 0: #if previously was non-increasing
+                        sweep_counter +=1
+                previous_slope = current_offset - previous_offset
+                previous_offset = current_offset
+            time.sleep(0.00001)
+        self.EnableTeensyMonitor(False)
+        self.EnableSweep(False)
+        # clear anything sent my the teensy that snuck through because of timing mismatch
+        time.sleep(1)
+        while self.sercon.inWaiting():
+            self.sercon.read(1)
+
     ##############################################################################################################
     #   Functions for the Clean Jump feature
     #   Note I haven't used these functions thoroughly so there might be bugs
@@ -818,7 +840,7 @@ class ITLA_Class:
         error = unsigned_to_signed(error)*0.1 
         return error
     
-    def WaitForJump(self, threshold):
+    def WaitToStabilise(self, threshold):
         """Wait until the error after a jump is within a threshold of the target frequency
 
         Args:
@@ -829,7 +851,7 @@ class ITLA_Class:
         """
         while True:
                     error = self.ReadError()
-                    if abs(error) <= 1.0:
+                    if abs(error) <= threshold:
                         print('Locked at a temperature of {} C'.format(self.ReadTemp()))
                         self.general_logger.info('Locked at a temperature of {} C'.format(self.ReadTemp()))
                         
@@ -1149,3 +1171,4 @@ def unsigned_to_signed(num):
     else:
         print('Error! input it outside the range of a 2 byte number')
     return ret
+

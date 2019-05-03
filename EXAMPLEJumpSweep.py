@@ -1,76 +1,23 @@
 import ITLA_Wrap
 import time
-import logging
-import csv 
+import CleanScanParameters
+import DualLogger
+from serial import SerialException
 
-
-def sweep_with_monitor():
-    ITLA.EnableSweep(True)
-    ITLA.EnableTeensyMonitor(True)
-    previous_offset = 0
-    previous_slope = 0
-    sweep_counter = -1   #start counter at -1 so I don't count the starting of the sweep as it turning around
-    while sweep_counter<1:
-        if ITLA.sercon.inWaiting() > 0:
-            scan_status, current_offset = ITLA.TeensyReadStatus()
-            
-            if current_offset - previous_offset > 0: #if frequency is increasing
-                if previous_slope <= 0: #if previously was non-increasing
-                    sweep_counter +=1
-            previous_slope = current_offset - previous_offset
-            previous_offset = current_offset
-        time.sleep(0.00001)
-    ITLA.EnableTeensyMonitor(False)
+def shutdown_sequence():
     ITLA.EnableSweep(False)
-    time.sleep(10)
-    # clear anything send my the teensy that snuck through because of timing mismatch
-    while ITLA.sercon.inWaiting():
-        ITLA.sercon.read(1)
-
-class CleanScanParameters:
-    def __init__(self,power):
-        self.frequency_full = []
-        self.sled_full = []
-        self.filter1_full = []
-        self.filter2_full = []
-        self.adjust1_full = []
-        self.adjust2_full = []
-        self.current_full = []
-
-        with open('clean_scan_parameters/' + power + '.csv','r') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
-            for row in reader:
-                self.frequency_full.append(float(row[1]))
-                self.sled_full.append(float(row[2]))
-                self.filter1_full.append(float(row[3]))
-                self.filter2_full.append(float(row[4]))
-                self.current_full.append(int(row[5]))
-                self.adjust1_full.append(int(row[6]))
-                self.adjust2_full.append(int(row[7])) 
-
-    def set_frequency_range(self,freq_start,freq_stop):
-        start = self.frequency_full.index(freq_start)
-        stop = self.frequency_full.index(freq_stop)+1
-
-        self.frequency = self.frequency_full[start:stop]
-        self.sled = self.sled_full[start:stop]
-        self.filter1 = self.filter1_full[start:stop]
-        self.filter2 = self.filter2_full[start:stop]
-        self.adjust1 = self.adjust1_full[start:stop]
-        self.adjust2 = self.adjust2_full[start:stop]
-        self.current = self.current_full[start:stop]
-
-
+    ITLA.EnableWhisperMode(False)
+    ITLA.EnableLaser(False)
+    ITLA.sercon.close()        
+    DualLogger.logging.shutdown()
+    
 if __name__ == "__main__":  
     try:
-        logging.basicConfig(level=logging.INFO, filename="logfile_"+time.strftime('%d%b%Y'), filemode="a+", format="%(asctime)-15s %(levelname)-8s %(message)s")                          
-    
-        ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU')
-    #     ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyUSB0",9600)
-    #    ITLA = ITLA_Wrap.ITLA_Class("/dev/ttyACM0",115200,'MCU')
+        ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU',DualLogger.general,DualLogger.lasercomms)
         
-        CleanScan = CleanScanParameters('10.0dBm')
-        CleanScan.set_frequency_range(195,195.2)
+        #Import all the currents/temperatures for the jump sequences
+        CleanScan = CleanScanParameters.CleanScanParameters('7.0dBm')
+        CleanScan.set_frequency_range(191.5,198.5,0.1)        
     
         #Probe laser and check it's happy
         ITLA.ProbeLaser()
@@ -89,29 +36,33 @@ if __name__ == "__main__":
             print('Jumping to {} THz'.format(CleanScan.frequency[idx]))
             ITLA.SetNextFrequency(CleanScan.frequency[idx])
             ITLA.SetNextSled(CleanScan.sled[idx])
-            print(CleanScan.sled[idx])
             ITLA.SetNextCurrent(CleanScan.current[idx])
-#            ITLA.FineTuneFrequency(0)
             ITLA.ExecuteJump()
-            while True:
-                error = ITLA.ReadError()
-                print(ITLA.ReadTemp())
-                if abs(error) == 0.0:
-                    break
-                time.sleep(0.001)
-
-            time.sleep(3) #3 secs recommended by Heino in case laser overshoots
-           
-            sweep_with_monitor()
-            #Adding some triggering of scopes here would be a good idea
-            
-            
+            ITLA.WaitToStabilise(0.5)
+                
+            ITLA.FineTuneFrequency(0)
+            ITLA.WaitForLaser()
+            ITLA.EnableSweep(False) #Make sure the pure jump function is finished
+            time.sleep(5) #3 secs recommended by Heino in case laser overshoots
+            ITLA.SweepWithMonitor(1)
+            #wait ten seconds after end of sweep for laser to stabilise after it's temperature ramp
+            t = time.time()
+            while time.time() - t <10:
+                time.sleep(0.1)
+                
+        shutdown_sequence()
     
-        
-        #turn everything off
-        ITLA.EnableWhisperMode(False)
-        ITLA.EnableLaser(False)
-        ITLA.sercon.close()
+    except KeyboardInterrupt:
+        DualLogger.general.info("Sequence interupted by user, shutting down laser")
+        print("Sequence interupted by user, shutting down laser")
+        shutdown_sequence()
+                
+    except SerialException:
+        print('Port already open')
+
     except Exception as err:
+        DualLogger.general.info("An error has occured, shutting down laser")
+        DualLogger.general.error(err)
+        print("An error has occured, shutting down laser")
+        shutdown_sequence()
         print(err)
-        ITLA.sercon.close()

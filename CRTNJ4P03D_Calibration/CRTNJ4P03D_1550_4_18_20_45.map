@@ -92,10 +92,6 @@ freq = 196.0 sled = 29.69 f1 = 59.958 f2 = 62.304 f1power = 21.9 f2power = 26.4 
 freq = 196.05 sled = 27.61 f1 = 54.586 f2 = 57.044 f1power = 19.44 f2power = 23.25 current = 1900 power = 1550 ambient = 2309
 freq = 196.1 sled = 28.8 f1 = 78.667 f2 = 79.819 f1power = 38.12 f2power = 43.02 current = 1933 power = 1550 ambient = 2320
 freq = 196.15 sled = 29.77 f1 = 73.441 f2 = 74.651 f1power = 32.83 f2power = 37.37 current = 1971 power = 1550 ambient = 2328
-freq = 196.0 sled = 29.69 f1 = 59.958 f2 = 62.327 f1power = 21.97 f2power = 25.89 current = 1922 power = 1550 ambient = 2325
-freq = 196.05 sled = 27.61 f1 = 54.6 f2 = 57.025 f1power = 19.28 f2power = 23.39 current = 1900 power = 1550 ambient = 2312
-freq = 196.1 sled = 28.81 f1 = 78.697 f2 = 79.795 f1power = 37.48 f2power = 43.45 current = 1932 power = 1550 ambient = 2324
-freq = 196.15 sled = 29.77 f1 = 73.425 f2 = 74.672 f1power = 32.78 f2power = 37.33 current = 1971 power = 1550 ambient = 2330
 freq = 196.2 sled = 27.76 f1 = 68.171 f2 = 69.452 f1power = 29.85 f2power = 34.21 current = 1892 power = 1550 ambient = 2311
 freq = 196.25 sled = 28.75 f1 = 62.85 f2 = 64.221 f1power = 25.22 f2power = 28.68 current = 1940 power = 1550 ambient = 2319
 freq = 196.3 sled = 29.77 f1 = 57.503 f2 = 58.978 f1power = 19.71 f2power = 23.19 current = 1928 power = 1550 ambient = 2327
