@@ -1144,7 +1144,7 @@ class ITLA_Class:
             self.general_logger.error("Expected register 229, got " + byte1)
         scan_status = (byte2 << 8) + byte3
 
-        print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,laser_temperature,case_temperature,offset))
+#        print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,laser_temperature,case_temperature,offset))
 
         return scan_status, offset
 

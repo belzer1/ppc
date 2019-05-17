@@ -9,7 +9,7 @@ int byte3;
 boolean laser_floating = true;
 
 unsigned long previousMillis = 0; 
-const long update_period = 100;
+const long update_period = 1000;
 
 boolean scanning = false;
 int ledPin = 13;
