@@ -14,7 +14,7 @@ class CleanScanParameters:
         self.adjust2_full = []
         self.current_full = []
 
-        with open('purephotonicscontrol/clean_scan_parameters/' + power + '.csv','r') as csvfile:
+        with open('clean_scan_parameters/' + power + '.csv','r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
             for row in reader:
                 self.frequency_full.append(float(row[1]))
