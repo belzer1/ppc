@@ -677,7 +677,7 @@ class ITLA_Class:
             None
         """
 
-        rateMHz = rate*1000
+        rateMHz = int(rate*1000)
         byte3 = rateMHz&0xff
         byte2 = (rateMHz&0xff00)>>8
         self.SendReceive(WRITE,REG_Cscanf1,byte2,byte3)
@@ -720,19 +720,24 @@ class ITLA_Class:
         (data - 2000)*0.1
         return data
 
-    def SweepWithMonitor(self, num_sweeps):
+    def SweepWithMonitor(self, num_sweeps,scope=''):
         self.EnableSweep(True)
         self.EnableTeensyMonitor(True)
         previous_offset = 0
         previous_slope = 0
         sweep_counter = -1   #start counter at -1 so I don't count the starting of the sweep as it turning around
+        has_triggered = False
         while sweep_counter < num_sweeps:
             if self.sercon.inWaiting() > 0:
                 scan_status, current_offset = self.TeensyReadStatus()
-                
                 if current_offset - previous_offset > 0: #if frequency is increasing
                     if previous_slope <= 0: #if previously was non-increasing
                         sweep_counter +=1
+                if current_offset - previous_offset < 0: #if frequency is decreasing
+                    if scope!='': #if a scope was given, then trigger it now
+                        if not has_triggered:
+                            has_triggered = True
+                            scope.trigger_manually()
                 previous_slope = current_offset - previous_offset
                 previous_offset = current_offset
             time.sleep(0.00001)
@@ -1145,7 +1150,7 @@ class ITLA_Class:
         scan_status = (byte2 << 8) + byte3
 
 #        print("{:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Offset {:.1f} GHz".format(power,laser_temperature,case_temperature,offset))
-
+        
         return scan_status, offset
 
     def EnableTeensyMonitor(self,state):

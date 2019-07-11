@@ -11,7 +11,7 @@ def shutdown_sequence():
      
 if __name__ == "__main__":  
     try:
-        ITLA = ITLA_Wrap.ITLA_Class("COM7",9600,'direct',DualLogger.general,DualLogger.lasercomms)
+        ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU',DualLogger.general,DualLogger.lasercomms)
         
         #Probe laser and check it's happy
         ITLA.ProbeLaser()

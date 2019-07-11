@@ -201,7 +201,7 @@ void probe_offset(boolean pass_on) {
   analogWrite(offsetAnalog,laser_offset);
 
   
-  if (abs(laser_offset-2000)<flag_range*5){
+  if (abs(laser_offset-2000)<flag_range*10/2){
     digitalWrite(offsetFlag,HIGH);
   } else {
     digitalWrite(offsetFlag,LOW);

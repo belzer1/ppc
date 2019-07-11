@@ -4,6 +4,7 @@ import time
 from serial import SerialException
 
 def shutdown_sequence():
+    ITLA.EnableSweep(False)
     ITLA.EnableWhisperMode(False)
     ITLA.EnableLaser(False)
     ITLA.sercon.close()        
@@ -18,13 +19,13 @@ if __name__ == "__main__":
         #Turn laser off before setting frequency is easiest
         ITLA.EnableLaser(False)
         #Set frequency in THz
-        ITLA.SetFrequency(195.50)
+        ITLA.SetFrequency(195.45)
         #Set power in dBm
-        ITLA.SetPower(10.0)
+        ITLA.SetPower(7.0)
         #Set sweep range in GHz
-        ITLA.SetSweepRange(120)
+        ITLA.SetSweepRange(140)
         #Set sweep rare in GHZ/s
-        ITLA.SetSweepRate(20)    
+        ITLA.SetSweepRate(3.333)    
         
         ITLA.EnableLaser(True)
         
@@ -34,12 +35,15 @@ if __name__ == "__main__":
     
         ITLA.EnableSweep(True)
         ITLA.EnableTeensyMonitor(True)
+        
+        while True:
+            time.sleep(1)
     
-        time.sleep(100)
+#        time.sleep(100)
         #DO SCIENCE
     
         #turn everything off
-        shutdown_sequence()
+#        shutdown_sequence()
 
     except KeyboardInterrupt:
         DualLogger.general.info("Sequence interupted by user, shutting down laser")
