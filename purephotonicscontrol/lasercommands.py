@@ -91,7 +91,7 @@ maxrowticket=0
 _error=ITLA_NOERROR
 seriallock=0
 
-class ITLA_Class:
+class laser:
     def __init__(self,port,baudrate, com_type, general_logger,lasercomms_logger):
         
         self.SetLoggers(general_logger,lasercomms_logger)

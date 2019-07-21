@@ -1,19 +1,17 @@
-import ITLA_Wrap
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
+from purephotonicscontrol import lasercommands, logger, shutdown
 import time
 import CleanScanParameters
-import DualLogger
 from serial import SerialException
 
-def shutdown_sequence():
-    ITLA.EnableSweep(False)
-    ITLA.EnableWhisperMode(False)
-    ITLA.EnableLaser(False)
-    ITLA.sercon.close()        
-    DualLogger.logging.shutdown()
     
 if __name__ == "__main__":  
     try:
-        ITLA = ITLA_Wrap.ITLA_Class("COM4",9600,'MCU',DualLogger.general,DualLogger.lasercomms)
+        shutdown.close_previous_session()
+        ITLA = lasercommands.laser("COM4",9600,'MCU',logger.general,logger.lasercomms)
         
         #Import all the currents/temperatures for the jump sequences
         CleanScan = CleanScanParameters.CleanScanParameters('7.0dBm')
@@ -50,19 +48,19 @@ if __name__ == "__main__":
             while time.time() - t <10:
                 time.sleep(0.1)
                 
-        shutdown_sequence()
+        shutdown.shutdown()
     
     except KeyboardInterrupt:
-        DualLogger.general.info("Sequence interupted by user, shutting down laser")
+        logger.general.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        shutdown_sequence()
+        shutdown.shutdown()
                 
-    except SerialException:
-        print('Port already open')
+    except SerialException as err:
+        print(err)
 
     except Exception as err:
-        DualLogger.general.info("An error has occured, shutting down laser")
-        DualLogger.general.error(err)
-        print("An error has occured, shutting down laser")
-        shutdown_sequence()
+        logger.general.info("An unknown error has occured, shutting down laser")
+        logger.general.error(err)
+        print("An unknown error has occured, shutting down laser")
+        shutdown.shutdown_sequence()
         print(err)

@@ -1,20 +1,14 @@
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
+from purephotonicscontrol import lasercommands, logger, shutdown
 import sys
 import visa
 import time
-from purephotonicscontrol import ITLA_Wrap
-from purephotonicscontrol import CleanScanParameters
-from purephotonicscontrol import DualLogger
 from scopecontrol import Tektronix_TBS2000_v2 as Tektronix_TBS2000
 from serial import SerialException
 import winsound
-
-def shutdown_sequence():
-    ITLA.EnableSweep(False)
-    ITLA.EnableWhisperMode(False)
-    ITLA.EnableLaser(False)
-    ITLA.sercon.close()        
-    DualLogger.logging.shutdown()
-    
 
 if __name__ == "__main__":  
     try:
@@ -23,7 +17,7 @@ if __name__ == "__main__":
         Tektronix_TBS2000.Initialise(rm)
         Tektronix_TBS2000.horizontal_scale(1.0)
         Tektronix_TBS2000.single_shot()
-        Tektronix_TBS2000.set_logger(DualLogger.general)
+        Tektronix_TBS2000.set_logger(logger.general)
         Tektronix_TBS2000.set_scale_3v3("CH1")
         Tektronix_TBS2000.Tektronix_TBS2000.write("CH1:SCALE 0.450")
         Tektronix_TBS2000.set_scale_3v3("CH2")
@@ -36,7 +30,8 @@ if __name__ == "__main__":
         CleanScan.set_frequency_range(191.5,198.5,0.1)
         
         #Connect to laser
-        ITLA = ITLA_Wrap.ITLA_Class("COM4",115200,'MCU',DualLogger.general,DualLogger.lasercomms)
+        shutdown.close_previous_session()
+        ITLA = lasercommands.laser("COM4",9600,'MCU',logger.general,logger.lasercomms)
         
         #Set up laser initial parameters
         ITLA.ProbeLaser()
@@ -72,24 +67,20 @@ if __name__ == "__main__":
             while time.time() - t <10:
                 time.sleep(0.1)
                 
-        shutdown_sequence()        
+        shutdown.shutdown()        
         winsound.Beep(1500,200)
         
     except KeyboardInterrupt:
-        DualLogger.general.info("Sequence interupted by user, shutting down laser")
+        logger.general.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        shutdown_sequence()
-        sys.exit(0)
+        shutdown.shutdown()
                 
-    except SerialException:
-        print('Port already open')
-        sys.exit(0)
+    except SerialException as err:
+        print(err)
 
     except Exception as err:
-        DualLogger.general.info("An error has occured, shutting down laser")
-        DualLogger.general.error(err)
-        print("An error has occured, shutting down laser")
-        shutdown_sequence()
+        logger.general.info("An unknown error has occured, shutting down laser")
+        logger.general.error(err)
+        print("An unknown error has occured, shutting down laser")
+        shutdown.shutdown_sequence()
         print(err)
-        sys.exit(0)
-
