@@ -2,16 +2,14 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from purephotonicscontrol import lasercommands, logger, shutdown
-import time
+from purephotonicscontrol import lasercommands, logger
 import CleanScanParameters
+import time
 from serial import SerialException
-
     
 if __name__ == "__main__":  
     try:
-        shutdown.close_previous_session()
-        ITLA = lasercommands.laser("COM4",9600,'MCU',logger.general,logger.lasercomms)
+        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
         
         #Import all the currents/temperatures for the jump sequences
         CleanScan = CleanScanParameters.CleanScanParameters('7.0dBm')
@@ -25,8 +23,11 @@ if __name__ == "__main__":
         ITLA.SetFrequency(195.50)
         #Set power in dBm
         ITLA.SetPower(10.0)
-        ITLA.SetSweepRange(120)
-        ITLA.SetSweepRate(10)    
+        #Set sweep range in GHz
+        ITLA.SetSweepRange(140)
+        #Set sweep rate in GHZ/s
+        ITLA.SetSweepRate(10)   
+        
         ITLA.EnableLaser(True)
         ITLA.EnableWhisperMode(True)
         
@@ -47,13 +48,12 @@ if __name__ == "__main__":
             t = time.time()
             while time.time() - t <10:
                 time.sleep(0.1)
-                
-        shutdown.shutdown()
+
     
     except KeyboardInterrupt:
         logger.general.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        shutdown.shutdown()
+        ITLA.Shutdown()        
                 
     except SerialException as err:
         print(err)
@@ -62,5 +62,9 @@ if __name__ == "__main__":
         logger.general.info("An unknown error has occured, shutting down laser")
         logger.general.error(err)
         print("An unknown error has occured, shutting down laser")
-        shutdown.shutdown_sequence()
-        print(err)
+        ITLA.Shutdown()
+        print(err)  
+        
+    finally:
+        ITLA.sercon.close()
+        logger.logging.shutdown()

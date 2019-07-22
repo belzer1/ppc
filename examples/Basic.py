@@ -2,15 +2,13 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from purephotonicscontrol import lasercommands, logger, shutdown
+from purephotonicscontrol import lasercommands, logger
 import time
 from serial import SerialException
 
 if __name__ == "__main__":  
     try:
-        shutdown.laser()
-
-        ITLA = lasercommands.laser("COM4",9600,'MCU',logger.general,logger.lasercomms)
+        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
         
         #Probe laser and check it's happy
         ITLA.ProbeLaser()
@@ -26,17 +24,15 @@ if __name__ == "__main__":
         ITLA.EnableWhisperMode(True)
         
         time.sleep(100)
-        #DO SCIENCE
+#        DO SCIENCE
         
-        #turn everything off
-        shutdown.laser()
-        shutdown.logs()
+#        turn laser off (optional)
+        ITLA.Shutdown()
         
     except KeyboardInterrupt:
         logger.general.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        shutdown.laser()
-        shutdown.logs()
+        ITLA.Shutdown()        
                 
     except SerialException as err:
         print(err)
@@ -45,6 +41,9 @@ if __name__ == "__main__":
         logger.general.info("An unknown error has occured, shutting down laser")
         logger.general.error(err)
         print("An unknown error has occured, shutting down laser")
-        shutdown.laser()
-        shutdown.logs()
+        ITLA.Shutdown()
         print(err)  
+        
+    finally:
+        ITLA.sercon.close()
+        logger.logging.shutdown()

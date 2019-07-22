@@ -1,6 +1,9 @@
 import csv 
+import os
 
-class CleanScanParameters:
+script_dir = os.path.dirname(__file__)
+
+class Parameters:
     """
     Manages the lasers required currents and temperatures for a given temperature/power
     This information is needed when doing Clean Jumps or Clean Scans
@@ -14,7 +17,7 @@ class CleanScanParameters:
         self.adjust2_full = []
         self.current_full = []
 
-        with open('clean_scan_parameters/' + power + '.csv','r') as csvfile:
+        with open(script_dir+'/' + power + '.csv','r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
             for row in reader:
                 self.frequency_full.append(float(row[1]))

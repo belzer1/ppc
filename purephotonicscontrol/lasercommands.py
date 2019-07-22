@@ -92,19 +92,20 @@ _error=ITLA_NOERROR
 seriallock=0
 
 class laser:
-    def __init__(self,port,baudrate, com_type, general_logger,lasercomms_logger):
+    def __init__(self,port,baudrate, general_logger,lasercomms_logger, com_type = 'MCU'):
         
         self.SetLoggers(general_logger,lasercomms_logger)
             
-            
         if com_type == 'direct':
             self.sercon = self.ITLAConnect(port,baudrate)
+            self.teensy_connected = False
         elif com_type == 'MCU':
             self.sercon = serial.Serial(port, baudrate)
             self.sercon.reset_input_buffer()
             self.sercon.reset_output_buffer()
+            self.teensy_connected = True
         else:
-            print("Enter 'direct' or 'MCU' when initialising laser")
+            print("com_type must be 'direct' or 'MCU'")
 
         self.min_frequency = self.SendReceive(READ,REG_Lfl1,0,0) + self.SendReceive(READ,REG_Lfl2,0,0)*0.0001
         print('This lasers minimum frequency is {} THz'.format(self.min_frequency))
@@ -645,6 +646,22 @@ class laser:
         self.SendReceive(WRITE,REG_Channel,0x00,0x01)
         self.general_logger.info("Set to channel 1 to make sure laser comes on at FCF")
         
+    def Shutdown(self):
+        """Ends any sweeps laser might be doing, turns laser off and closes serial port
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
+        self.EnableSweep(False)
+        self.EnableWhisperMode(False)
+        self.EnableLaser(False)
+        self.sercon.close()
+        self.general_logger.info("Safely shutting down laser and closing serial port")
+        
     ##############################################################################################################
     #   Functions for the Clean Sweep feature
     ##############################################################################################################
@@ -699,10 +716,19 @@ class laser:
             self.SendReceive(WRITE,REG_Csweepsena,0x00,0x01)
             self.general_logger.info("Laser sweep enabled")
             print("Sweep enabled")
+            if self.teensy_connected:
+                self.EnableTeensyMonitor(True)
         else:
+            if self.teensy_connected:
+                self.EnableTeensyMonitor(False)
+                # clear anything sent my the teensy that snuck through because of timing mismatch
+                time.sleep(1)
+                while self.sercon.inWaiting():
+                    self.sercon.read(1)
             self.SendReceive(WRITE,REG_Csweepsena,0x00,0x00)
             self.general_logger.info("Laser sweep disabled")
             print("Sweep disabled")
+            
 
     def ReadOffsetFreq(self):
         """Reads laser current frequency offset
@@ -722,7 +748,6 @@ class laser:
 
     def SweepWithMonitor(self, num_sweeps,scope=''):
         self.EnableSweep(True)
-        self.EnableTeensyMonitor(True)
         previous_offset = 0
         previous_slope = 0
         sweep_counter = -1   #start counter at -1 so I don't count the starting of the sweep as it turning around
@@ -741,7 +766,6 @@ class laser:
                 previous_slope = current_offset - previous_offset
                 previous_offset = current_offset
             time.sleep(0.00001)
-        self.EnableTeensyMonitor(False)
         self.EnableSweep(False)
         # clear anything sent my the teensy that snuck through because of timing mismatch
         time.sleep(1)
@@ -1156,11 +1180,9 @@ class laser:
     def EnableTeensyMonitor(self,state):
         if state == True:
             self.Send_command(255,255,255,255)
-            print("Putting teensy in to monitor mode")
             self.general_logger.info("Putting teensy in to monitor mode")
         else:
             self.Send_command(254,254,254,254)
-            print("taking teensy out of monitor mode")
             self.general_logger.info("Taking teensy out of monitor mode")
             
     
