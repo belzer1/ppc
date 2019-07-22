@@ -620,6 +620,7 @@ class laser:
     def FineTuneFrequency(self,ftf):
         """Adjust laser frequency small amount, in GHz
         Rounded to nearest MHz
+        Default laser can accept -30 to +30 GHz
 
         Args:
             ftf (float): frequency adjustment in MHz
@@ -628,10 +629,13 @@ class laser:
             None
         """
         ftf_MHz = int(ftf*1000)
+        ftf_MHz = ctypes.c_ushort(ftf_MHz).value #convert signed integer to unsigned integer
+
         byte3 = ftf_MHz&0xff
         byte2 = (ftf_MHz&0xff00)>>8
-        self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
+        resp = self.SendReceive(WRITE,REG_Ftf,byte2,byte3)
         self.general_logger.info("Fine tune frequency set to " + str(ftf))
+        return resp
 
     def SetChannel1(self):
         """Makes sure the laser turns on in it's standard channel

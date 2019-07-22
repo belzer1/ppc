@@ -1,38 +1,55 @@
-Wrapper Matt Berrington made for the PurePhotonics Laser.
+# purephotonicscontrol
 
-Check out EXAMPLE.py for how to use it. It should be pretty simple.
+A python package to easily communicate with PurePhotonics lasers through python. 
+Most purephotonics features are implemented, so the user can create their own computer controlled laser sequence.
+The package has been developed for the PPCL560 laser, but should generalise.
 
-Below are laser control functions I've implemented include.
+The code assume that the PPCL560 laser is interfaced with a Teensy 3.6 as outlined in(TO DO!). This interface is useful for creating trigger-able signals from the laser.
+When the laser to connected to a PC directly, do this (TO DO!)
 
-Common functions:
+## Getting Started
 
-ProbeLaser()					#Check's to see it laser it behaving. Will cycle the laser if it's not. If all is good, nothing is done
-SetWavelength(wavelength) 		#Specify wavelength in nm. Note the wavelength will the rounded to the nearest 0.1GHz
-SetFrequency(freq)				#Specify frequency in THz, accurate to 0.1GHz
-SetPower(power)					#Specify power in dBm
-EnableLaser(state)				#Turn laser on/off using 'True'/'False'
-WaitForLaser()					#Wait until the laser is no longer pending and gives the thumbs up for the next command. I automatically do this after enabling 
-EnableWhisperMode(state)		#Turn whisper mode on/off using 'True'/'False'
+No installation is requited. Just download the package and run the example code.
+TO DO: Add details on connecting PC to laser
 
-Sweeping functions:
-		
-SetSweepRange(range)			#Specify sweep range in GHz. Sweeping needs to be off when this is done
-SetSweepRate(rate)				#Specify sweep range in MHz/s. Sweeping needs to be off when this is done
-EnableSweep(state)				#Turn sweeping on/off using 'True'/'False'
-ReadOffsetFreq()				#Returns the current frequnecy offset of the sweep in GHz. Can be buggy if you don't have a small delay between starting sweep and using this function
-		
-Jumping functions (not thoroughly tested, use at own risk):
+### Prerequisites
 
-SetNextFrequency(freq)			#Set frequency to jump to next
-SetNextSled(sled)				#Set sled for next jump, which is found in laser calibration stuff
-SetNextCurrent(current)			#Set current for next jump, which is found in laser calibration stuff
-ExecuteJump()					#Jump!
-FineTuneFrequency(ftf)
+Python3 with time, serial, os, struct, threading, ctypes, logging packages installed
 
-Other:
-ReadTemp() 						#Return the laser temperature
-ReadDeviceTemp(self)			#This returns the 'device temperature' instead of the 'laser temperature'. I'm unsure what the difference is
-ReadDeviceCurrent(self):		#Return the device's current
 
-Useful information:
-A full scan of the Photonics 3 range in 50GHz increments takes 15 minutes
+### Installing
+
+TO DO!
+
+```
+Give the example
+```
+
+And repeat
+
+```
+until finished
+```
+
+End with an example of getting some data out of the system or using it for a little demo
+
+
+## Contributing
+
+TO DO
+
+
+## Authors
+
+* **Matthew Berrington** - *Initial work* - [bitbucket profile](https://bitbucket.org/matthewberrington)
+
+## License
+
+TO DO
+
+## Acknowledgments
+
+* Thanks to PurePhotonics for provided a python example which seeded this project
+
+
+
