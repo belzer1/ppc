@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="purephotonicscontrol",
-    version="0.0.1",
+    version="0.0.2",
     author="Matthew Berrington",
     author_email="berrington95@gmail.com",
     description="A package to control PurePhotonics lasers",

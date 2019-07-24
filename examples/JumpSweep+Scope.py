@@ -1,7 +1,7 @@
 import visa
 import time
-from purephotonicscontrol.purephotonicscontrol import lasercommands, logger
-from purephotonicscontrol.clean_scan_parameters import clean_scan_parameters
+from purephotonicscontrol import lasercommands, logger
+from clean_scan_parameters import clean_scan_parameters
 from scopecontrol import Tektronix_TBS2000_v2 as Tektronix_TBS2000
 from serial import SerialException
 import winsound
