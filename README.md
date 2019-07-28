@@ -1,55 +1,54 @@
 # purephotonicscontrol
 
-A python package to easily communicate with PurePhotonics lasers through python. 
+A python package to easily communicate with [PurePhotonics](https://www.pure-photonics.com/) lasers through python. 
 Most purephotonics features are implemented, so the user can create their own computer controlled laser sequence.
-The package has been developed for the PPCL560 laser, but should generalise.
+The package has been developed for the PPCL560 laser, but should generalise to other products.
 
-The code assume that the PPCL560 laser is interfaced with a Teensy 3.6 as outlined in(TO DO!). This interface is useful for creating trigger-able signals from the laser.
-When the laser to connected to a PC directly, do this (TO DO!)
+The package assumes that the PPCL560 laser is interfaced with a Teensy 3.6 as outlined in (TO DO!). This interface is useful for creating triggerable signals from the laser. If the laser is connected directly to a PC (no Teensy), then set `com_type='direct'` when initialising laser communication.
 
-## Getting Started
+## Installation
 
-No installation is requited. Just download the package and run the example code.
-TO DO: Add details on connecting PC to laser
+The easiest way to install the package is with pip:
+
+```
+pip install purephotonicscontrol
+```
+
+## Usage
+
+Initalise communication with the laser
+```
+ITLA = purephotonicscontrol.lasercommands.laser("COM4")
+```
+Then give the laser whatever commands you like
+```
+ITLA.SetFrequency(191.50)
+ITLA.SetPower(7.0)
+ITLA.EnableLaser(True)
+```
 
 ### Prerequisites
 
-Python3 with time, serial, os, struct, threading, ctypes, logging packages installed
-
-
-### Installing
-
-TO DO!
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
+This package requires pyserial and numpy, but these should be automatically installed when you pip install
 
 ## Contributing
 
-TO DO
-
+Contributions to the package are welcome. The recommended workflow to contribute is:
+1. **Fork** the repo on GitHub
+2. **Clone** the project to your own machine
+3. **Commit** changes to your own branch
+4. **Push** your work back up to your fork
+5. Submit a **Pull request** so that we can review your changes
 
 ## Authors
 
-* **Matthew Berrington** - *Initial work* - [bitbucket profile](https://bitbucket.org/matthewberrington)
+* **Matthew Berrington** (*primary developer*) - [bitbucket profile](https://bitbucket.org/matthewberrington)
+* **PurePhotonics** (*inital work*) [website](https://www.pure-photonics.com/)
 
 ## License
 
-TO DO
+GNU General Public License v3
 
 ## Acknowledgments
 
-* Thanks to PurePhotonics for provided a python example which seeded this project
-
-
-
+* Many thanks go to PurePhotonics for making their python interface example publically available at [link](https://www.pure-photonics.com/s/ITLA_v3-CUSTOMER.PY). Their work forms the base of this python package
