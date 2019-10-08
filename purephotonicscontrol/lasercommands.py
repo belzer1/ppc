@@ -749,12 +749,59 @@ class laser:
         #   data = (data - 65535)*0.1
         (data - 2000)*0.1
         return data
+    
+    def SingleSweep(self,scope=''):
+        self.EnableSweep(True)
+        previous_freq_offset = 0
+        #I record the last four slopes as a kind of bounce avoidance
+        slope_record =  [1,1,1,1,1,1,1,1,1,1]
+        t=time.time()
+        while True:
+            if self.sercon.inWaiting() > 0:
+                print(time.time()-t)
+                t=time.time()
+                slope_record.pop(0)
+                scan_status, freq_offset = self.TeensyReadStatus()
+                if freq_offset - previous_freq_offset < 0: #if frequency is decreasing, it is starting full sweep
+                    slope_record.append(-1)
+                else:
+                    slope_record.append(1)
+                
+                previous_freq_offset = freq_offset
+                
+                if sum(slope_record) == -10: #can be sure it's decreasing
+                    scope.trigger_manually()
+                    break
+                
+            time.sleep(0.00001)
+            
+        while True:
+            if self.sercon.inWaiting() > 0:
+                slope_record.pop(0)
+                scan_status, freq_offset = self.TeensyReadStatus()
+                if freq_offset - previous_freq_offset > 0: #if frequency is increasing 
+                    slope_record.append(1)
+                else:
+                    slope_record.append(-1)
+                
+                previous_freq_offset = freq_offset
+                
+                if sum(slope_record) == 10: #can be sure it's increasing again
+                    self.EnableSweep(False)
+                    break
+            time.sleep(0.00001)
+        
+        # clear anything sent by the teensy that snuck through because of timing mismatch
+        time.sleep(1)
+        while self.sercon.inWaiting():
+            self.sercon.read(1)
+            
 
     def SweepWithMonitor(self, num_sweeps,scope=''):
         self.EnableSweep(True)
         previous_offset = 0
         previous_slope = 0
-        sweep_counter = -1   #start counter at -1 so I don't count the starting of the sweep as it turning around
+        sweep_counter = -1   #start counter at -1 so I don't count the half sweep as it starts
         has_triggered = False
         while sweep_counter < num_sweeps:
             if self.sercon.inWaiting() > 0:

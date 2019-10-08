@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="purephotonicscontrol",
-    version="0.0.2",
+    version="0.0.0",
     author="Matthew Berrington",
     author_email="berrington95@gmail.com",
     description="A package to control PurePhotonics lasers",
@@ -13,6 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://bitbucket.org/matthewberrington/purephotonicscontrol",
     packages=setuptools.find_packages(),
+    install_requires=['pyserial','numpy'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

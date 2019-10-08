@@ -1,6 +1,6 @@
 import visa
 import time
-from purephotonicscontrol.purephotonicscontrol import lasercommands, logger
+from purephotonicscontrol import lasercommands, logger
 from scopecontrol import Tektronix_TBS2000_v2 as Tektronix_TBS2000
 from serial import SerialException
 import winsound
@@ -26,8 +26,8 @@ if __name__ == "__main__":
         #Set up laser initial parameters
         ITLA.ProbeLaser()
         ITLA.EnableLaser(False)
-        ITLA.SetFrequency(195.22)
-        ITLA.SetPower(15.5)
+        ITLA.SetFrequency(194.0)
+        ITLA.SetPower(10.0)
         ITLA.SetSweepRange(140)
         ITLA.SetSweepRate(10)
         ITLA.EnableLaser(True)

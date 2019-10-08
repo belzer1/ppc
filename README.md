@@ -9,29 +9,23 @@ When the laser to connected to a PC directly, do this (TO DO!)
 
 ## Getting Started
 
-No installation is requited. Just download the package and run the example code.
+Run the examples on the git
 TO DO: Add details on connecting PC to laser
 
 ### Prerequisites
 
-Python3 with time, serial, os, struct, threading, ctypes, logging packages installed
+Python3, a laser
 
 
 ### Installing
 
-TO DO!
 
 ```
-Give the example
+pip install purephotonicscontrol
 ```
 
-And repeat
 
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
+TO DO: End with an example of getting some data out of the system or using it for a little demo
 
 
 ## Contributing
@@ -41,11 +35,11 @@ TO DO
 
 ## Authors
 
-* **Matthew Berrington** - *Initial work* - [bitbucket profile](https://bitbucket.org/matthewberrington)
+* **Matthew Berrington**  - [bitbucket profile](https://bitbucket.org/matthewberrington)
 
 ## License
 
-TO DO
+The MIT License
 
 ## Acknowledgments
 

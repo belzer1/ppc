@@ -11,19 +11,19 @@ if __name__ == "__main__":
         #Turn laser off before setting frequency is easiest
         ITLA.EnableLaser(False)
         #Set frequency in THz
-        ITLA.SetFrequency(191.50)
+        ITLA.SetFrequency(191.5)
         #Set power in dBm
-        ITLA.SetPower(7.0)
+        ITLA.SetPower(10.0)
         
         ITLA.EnableLaser(True)
         
         ITLA.EnableWhisperMode(True)
         
-        time.sleep(100)
+#        time.sleep(100)
 #        DO SCIENCE
         
 #        turn laser off (optional)
-        ITLA.Shutdown()
+#        ITLA.Shutdown()
         
     except KeyboardInterrupt:
         logger.general.info("Sequence interupted by user, shutting down laser")

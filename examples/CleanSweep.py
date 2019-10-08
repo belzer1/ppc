@@ -11,13 +11,13 @@ if __name__ == "__main__":
         #Turn laser off before setting frequency is easiest
         ITLA.EnableLaser(False)
         #Set frequency in THz
-        ITLA.SetFrequency(195.45)
+        ITLA.SetFrequency(194.00)
         #Set power in dBm
-        ITLA.SetPower(7.0)
+        ITLA.SetPower(10.0)
         #Set sweep range in GHz
         ITLA.SetSweepRange(140)
         #Set sweep rate in GHZ/s
-        ITLA.SetSweepRate(3.333)    
+        ITLA.SetSweepRate(10)  
         
         ITLA.EnableLaser(True)
         
@@ -30,11 +30,11 @@ if __name__ == "__main__":
 #        while True:
 #            time.sleep(1)
     
-        time.sleep(10)
+#        time.sleep(10)
         #DO SCIENCE
     
         #turn laser off (optional)
-        ITLA.Shutdown()
+#        ITLA.Shutdown()
         
     except KeyboardInterrupt:
         logger.general.info("Sequence interupted by user, shutting down laser")

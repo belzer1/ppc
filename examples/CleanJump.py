@@ -6,7 +6,7 @@ from serial import SerialException
 if __name__ == "__main__":  
     try:        
         #Import all the currents/temperatures for the jump sequences
-        jump_setpoints = clean_scan_parameters.Parameters('7.0dBm')
+        jump_setpoints = clean_scan_parameters.Parameters('10.0dBm')
         jump_setpoints.set_frequency_range(191.5,198.5,0.1)
         
         #Connect to laser
