@@ -4,7 +4,7 @@ from serial import SerialException
 
 if __name__ == "__main__":  
     try:
-        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
+        ITLA = lasercommands.laser("COM8")
         
         #Probe laser and check it's happy
         ITLA.ProbeLaser()

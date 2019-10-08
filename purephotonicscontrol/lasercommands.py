@@ -14,6 +14,7 @@ import math
 import logging
 import csv
 import ctypes
+import logger
 
 ITLA_NOERROR=0x00
 ITLA_EXERROR=0x01
@@ -92,9 +93,9 @@ _error=ITLA_NOERROR
 seriallock=0
 
 class laser:
-    def __init__(self,port,baudrate, general_logger,lasercomms_logger, com_type = 'MCU'):
+    def __init__(self,port,baudrate=9600, com_type = 'MCU'):
         
-        self.SetLoggers(general_logger,lasercomms_logger)
+        self.SetLoggers(logger.general,logger.lasercomms)
             
         if com_type == 'direct':
             self.sercon = self.ITLAConnect(port,baudrate)
