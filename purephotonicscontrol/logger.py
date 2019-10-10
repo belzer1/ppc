@@ -1,27 +1,34 @@
 import logging
 import time
 import os
+import datetime
 
-def setup_logger(name, log_file, level=logging.INFO):
-    """Function setup as many loggers as you want"""
-    
-    handler = logging.FileHandler(log_file)        
-    
-    handler.setFormatter(formatter)
+class logger:
+	def __init__(self, base_path=r"C:\\Users\\lab\\Berrington\\DataLibrary\\"):
+		now = datetime.datetime.now()
+		path = base_path + now.strftime("%Y\\%m\\%d\\")
+		if not os.path.isdir(path):
+		    os.makedirs(path)
+		self.formatter = logging.Formatter("%(asctime)-15s %(levelname)-8s %(message)s")
 
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(handler)
+		self.general = self.setup_logger('general', 'general.log')
+		self.lasercomms = self.setup_logger('lasercomms', 'lasercomms.log')
 
-    return logger
+	def setup_logger(self,name, log_file, level=logging.INFO):
+	    """Function setup as many loggers as you want"""
+	    
+	    handler = logging.FileHandler(log_file)        
+	    
+	    handler.setFormatter(self.formatter)
 
-if not os.path.exists("logs"):
-    os.makedirs("logs")
-    
-    
-#Set up all the logging stuff
-formatter = logging.Formatter("%(asctime)-15s %(levelname)-8s %(message)s")
-general = setup_logger('general', 'logs/general'+time.strftime('%d%b%Y')+'.log')
-lasercomms = setup_logger('lasercomms', 'logs/lasercomms'+time.strftime('%d%b%Y')+'.log')
-general.info('Starting another experiment')
-lasercomms.info('Starting another experiment')
+	    logger = logging.getLogger(name)
+	    logger.setLevel(level)
+	    logger.addHandler(handler)
+
+	    return logger
+
+	def shutdown():
+		logging.shutdown()
+
+	   
+	#Set up all the logging stuff
