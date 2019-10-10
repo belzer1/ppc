@@ -4,16 +4,16 @@ from serial import SerialException
 
 if __name__ == "__main__":  
     try:
-        ITLA = lasercommands.laser("COM8")
+        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
         
         #Probe laser and check it's happy
         ITLA.ProbeLaser()
         #Turn laser off before setting frequency is easiest
         ITLA.EnableLaser(False)
         #Set frequency in THz
-        ITLA.SetFrequency(191.5)
+        ITLA.SetFrequency(195.93)
         #Set power in dBm
-        ITLA.SetPower(10.0)
+        ITLA.SetPower(13.0)
         
         ITLA.EnableLaser(True)
         

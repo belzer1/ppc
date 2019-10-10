@@ -11,9 +11,9 @@ if __name__ == "__main__":
         #Turn laser off before setting frequency is easiest
         ITLA.EnableLaser(False)
         #Set frequency in THz
-        ITLA.SetFrequency(194.00)
+        ITLA.SetFrequency(195.93)
         #Set power in dBm
-        ITLA.SetPower(10.0)
+        ITLA.SetPower(16.0)
         #Set sweep range in GHz
         ITLA.SetSweepRange(140)
         #Set sweep rate in GHZ/s
