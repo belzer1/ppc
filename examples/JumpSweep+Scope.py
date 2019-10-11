@@ -1,20 +1,23 @@
 import visa
 import time
-from purephotonicscontrol import lasercommands, logger
-from clean_scan_parameters import clean_scan_parameters
-from scopecontrol import Tektronix_TBS2000_v2 as Tektronix_TBS2000
-from serial import SerialException
+from purephotonicscontrol.purephotonicscontrol import lasercommands, logger, clean_scan_parameters
+from scopecontrol import Tektronix_TBS2000
 import winsound
     
-
 if __name__ == "__main__":  
     try:
+        if 'ITLA' in locals():
+            ITLA.Shutdown()
+            ITLA.sercon.close()
+            del ITLA   
+        general = logger.logger('general')
+        lasercomms = logger.logger('lasercomms')
+        
         #Initialise the scope
         rm = visa.ResourceManager();
-        Tektronix_TBS2000.Initialise(rm)
+        Tektronix_TBS2000.Initialise(rm,general.log)
         Tektronix_TBS2000.horizontal_scale(1.0)
         Tektronix_TBS2000.single_shot()
-        Tektronix_TBS2000.set_logger(logger.general)
         Tektronix_TBS2000.set_scale_3v3("CH1")
         Tektronix_TBS2000.Tektronix_TBS2000.write("CH1:SCALE 0.250")
 #        Tektronix_TBS2000.set_scale_3v3("CH2")
@@ -28,7 +31,7 @@ if __name__ == "__main__":
         jump_setpoints.set_frequency_range(191.5,191.8,0.1)
         #Connect to laser
         
-        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
+        ITLA = lasercommands.laser("COM8",general.log,lasercomms.log)
         
         #Set up laser initial parameters
         ITLA.ProbeLaser()
@@ -56,10 +59,10 @@ if __name__ == "__main__":
             ITLA.WaitForLaser()
             ITLA.EnableSweep(False) #Make sure the pure jump function is finished
             time.sleep(3) #3 secs recommended by Heino in case laser overshoots
-            Tektronix_TBS2000.wait_till_ready()
+            Tektronix_TBS2000.wait_until_ready()
         
 #            Tektronix_TBS2000.trigger_manually()
-            ITLA.SweepWithMonitor(1,Tektronix_TBS2000)
+            ITLA.SingleSweep(Tektronix_TBS2000)
             t = time.time()
             Tektronix_TBS2000.wait_to_collect()
             Tektronix_TBS2000.capture()
@@ -71,20 +74,21 @@ if __name__ == "__main__":
         winsound.Beep(1500,200)
         
     except KeyboardInterrupt:
-        logger.general.info("Sequence interupted by user, shutting down laser")
+        general.log.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        ITLA.Shutdown()        
-                
-    except SerialException as err:
-        print(err)
+        if 'ITLA' in locals():
+            general.log.info('Shutting down laser')
+            print('Shutting down laser')
+            ITLA.Shutdown()       
 
     except Exception as err:
-        logger.general.info("An unknown error has occured, shutting down laser")
-        logger.general.error(err)
-        print("An unknown error has occured, shutting down laser")
-        ITLA.Shutdown()
-        print(err)  
+        general.log.error(err)
+        print(err)
+        if 'ITLA' in locals():
+            general.log.info('Shutting down laser')
+            print('Shutting down laser')
+            ITLA.Shutdown()
         
-    finally:        
-        ITLA.sercon.close()
-        logger.logging.shutdown()
+    finally:             
+        general.shutdown()
+        lasercomms.shutdown()

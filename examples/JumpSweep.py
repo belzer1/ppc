@@ -1,66 +1,71 @@
-from purephotonicscontrol import lasercommands, logger
-import CleanScanParameters
+import visa
 import time
-from serial import SerialException
+from purephotonicscontrol.purephotonicscontrol import lasercommands, logger, clean_scan_parameters
+import winsound
     
 if __name__ == "__main__":  
     try:
-        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
+        if 'ITLA' in locals():
+            ITLA.Shutdown()
+            ITLA.sercon.close()
+            del ITLA           
+        general = logger.logger('general')
+        lasercomms = logger.logger('lasercomms')
         
         #Import all the currents/temperatures for the jump sequences
-        CleanScan = CleanScanParameters.CleanScanParameters('7.0dBm')
-        CleanScan.set_frequency_range(191.5,198.5,0.1)        
-    
-        #Probe laser and check it's happy
-        ITLA.ProbeLaser()
-        #Turn laser off before setting frequency is easiest
-        ITLA.EnableLaser(False)
-        #Set frequency in THz
-        ITLA.SetFrequency(195.50)
-        #Set power in dBm
-        ITLA.SetPower(10.0)
-        #Set sweep range in GHz
-        ITLA.SetSweepRange(140)
-        #Set sweep rate in GHZ/s
-        ITLA.SetSweepRate(10)   
+        jump_setpoints = clean_scan_parameters.Parameters('7.0dBm')
+        jump_setpoints.set_frequency_range(191.5,191.8,0.1)
+        #Connect to laser
         
+        ITLA = lasercommands.laser("COM8",general.log,lasercomms.log)
+        
+        #Set up laser initial parameters
+        ITLA.ProbeLaser()
+        ITLA.EnableLaser(False)
+        ITLA.SetFrequency(195.22)
+        ITLA.SetPower(10.0)
+        ITLA.SetSweepRange(140)
+        ITLA.SetSweepRate(10)
         ITLA.EnableLaser(True)
         ITLA.EnableWhisperMode(True)
-        
-        for idx, _ in enumerate(CleanScan.frequency):            
-            print('Jumping to {} THz'.format(CleanScan.frequency[idx]))
-            ITLA.SetNextFrequency(CleanScan.frequency[idx])
-            ITLA.SetNextSled(CleanScan.sled[idx])
-            ITLA.SetNextCurrent(CleanScan.current[idx])
+  
+        for idx, _ in enumerate(jump_setpoints.frequency):
+            print('Jumping to {} THz'.format(jump_setpoints.frequency[idx]))
+            ITLA.SetNextFrequency(jump_setpoints.frequency[idx])
+            ITLA.SetNextSled(jump_setpoints.sled[idx])
+            ITLA.SetNextCurrent(jump_setpoints.current[idx])
             ITLA.ExecuteJump()
             ITLA.WaitToStabilise(0.5)
                 
             ITLA.FineTuneFrequency(0)
             ITLA.WaitForLaser()
             ITLA.EnableSweep(False) #Make sure the pure jump function is finished
-            time.sleep(5) #3 secs recommended by Heino in case laser overshoots
-            ITLA.SweepWithMonitor(1)
-            #wait ten seconds after end of sweep for laser to stabilise after it's temperature ramp
+            time.sleep(3) #3 secs recommended by Heino in case laser overshoots
+        
+            ITLA.SingleSweep()
             t = time.time()
+            #wait ten seconds after end of sweep for laser to stabilise after it's temperature ramp
             while time.time() - t <10:
                 time.sleep(0.1)
-
-    
+                        
+        winsound.Beep(1500,200)
+        
     except KeyboardInterrupt:
-        logger.general.info("Sequence interupted by user, shutting down laser")
+        general.log.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        ITLA.Shutdown()        
-                
-    except SerialException as err:
-        print(err)
+        if 'ITLA' in locals():
+            general.log.info('Shutting down laser')
+            print('Shutting down laser')
+            ITLA.Shutdown()       
 
     except Exception as err:
-        logger.general.info("An unknown error has occured, shutting down laser")
-        logger.general.error(err)
-        print("An unknown error has occured, shutting down laser")
-        ITLA.Shutdown()
-        print(err)  
+        general.log.error(err)
+        print(err)
+        if 'ITLA' in locals():
+            general.log.info('Shutting down laser')
+            print('Shutting down laser')
+            ITLA.Shutdown()
         
-    finally:
-        ITLA.sercon.close()
-        logger.logging.shutdown()
+    finally:              
+        general.shutdown()
+        lasercomms.shutdown()

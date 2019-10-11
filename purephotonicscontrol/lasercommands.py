@@ -14,7 +14,7 @@ import math
 import logging
 import csv
 import ctypes
-import logger
+#import logger
 
 ITLA_NOERROR=0x00
 ITLA_EXERROR=0x01
@@ -93,9 +93,9 @@ _error=ITLA_NOERROR
 seriallock=0
 
 class laser:
-    def __init__(self,port,baudrate=9600, com_type = 'MCU'):
+    def __init__(self,port, log_general,log_lasercomms,baudrate=9600, com_type = 'MCU'):
         
-        self.SetLoggers(logger.general,logger.lasercomms)
+        self.SetLoggers(log_general,log_lasercomms)
             
         if com_type == 'direct':
             self.sercon = self.ITLAConnect(port,baudrate)
@@ -109,15 +109,15 @@ class laser:
             print("com_type must be 'direct' or 'MCU'")
 
         self.min_frequency = self.SendReceive(READ,REG_Lfl1,0,0) + self.SendReceive(READ,REG_Lfl2,0,0)*0.0001
-        print('This lasers minimum frequency is {} THz'.format(self.min_frequency))
+        print("This laser's minimum frequency is {} THz".format(self.min_frequency))
         self.max_frequency = self.SendReceive(READ,REG_Lfh1,0,0) + self.SendReceive(READ,REG_Lfh2,0,0)*0.0001
-        print('This lasers maximum frequency is {} THz'.format(self.max_frequency))
+        print("This laser's maximum frequency is {} THz".format(self.max_frequency))
         self.min_power = self.SendReceive(READ,REG_Opsl,0,0)*0.01
-        print('This lasers minimum power is {} dBm'.format(self.min_power))
+        print("This laser's minimum power is {} dBm".format(self.min_power))
         self.max_power = self.SendReceive(READ,REG_Opsh,0,0)*0.01
-        print('This lasers maximum power is {} dBm'.format(self.max_power))
+        print("This laser's maximum power is {} dBm".format(self.max_power))
         self.min_grid = self.SendReceive(READ,REG_Lgrid,0,0)*0.1
-        print('This lasers minumum grid spacing is {} GHz'.format(self.min_grid))
+        print("This laser's minumum grid spacing is {} GHz".format(self.min_grid))
 
     def stripString(self,inp):
         outp=''
@@ -751,16 +751,13 @@ class laser:
         (data - 2000)*0.1
         return data
     
-    def SingleSweep(self,scope=''):
+    def SingleSweep(self,scope=False):
         self.EnableSweep(True)
         previous_freq_offset = 0
         #I record the last four slopes as a kind of bounce avoidance
         slope_record =  [1,1,1,1,1,1,1,1,1,1]
-        t=time.time()
         while True:
             if self.sercon.inWaiting() > 0:
-                print(time.time()-t)
-                t=time.time()
                 slope_record.pop(0)
                 scan_status, freq_offset = self.TeensyReadStatus()
                 if freq_offset - previous_freq_offset < 0: #if frequency is decreasing, it is starting full sweep
@@ -771,7 +768,8 @@ class laser:
                 previous_freq_offset = freq_offset
                 
                 if sum(slope_record) == -10: #can be sure it's decreasing
-                    scope.trigger_manually()
+                    if scope!=False:
+                        scope.trigger_manually()
                     break
                 
             time.sleep(0.00001)

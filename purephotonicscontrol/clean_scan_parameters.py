@@ -17,7 +17,7 @@ class Parameters:
         self.adjust2_full = []
         self.current_full = []
 
-        with open(script_dir+'/' + power + '.csv','r') as csvfile:
+        with open('C:\\Users\\lab\\Berrington\\LabCode\\purephotonicscontrol\\CRTNJ4P03D_Calibration\\' + power + '.csv','r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
             for row in reader:
                 self.frequency_full.append(float(row[1]))

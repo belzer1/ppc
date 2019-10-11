@@ -1,16 +1,21 @@
-from purephotonicscontrol import lasercommands, logger
-from clean_scan_parameters import clean_scan_parameters
+from purephotonicscontrol.purephotonicscontrol import lasercommands, logger, clean_scan_parameters
 import time
-from serial import SerialException
 
 if __name__ == "__main__":  
-    try:        
+    try:
+        if 'ITLA' in locals():
+            ITLA.Shutdown()
+            ITLA.sercon.close()
+            del ITLA           
+        general = logger.logger('general')
+        lasercomms = logger.logger('lasercomms')
+        
         #Import all the currents/temperatures for the jump sequences
         jump_setpoints = clean_scan_parameters.Parameters('10.0dBm')
-        jump_setpoints.set_frequency_range(191.5,198.5,0.1)
+        jump_setpoints.set_frequency_range(191.5,192.5,0.1)
         
         #Connect to laser
-        ITLA = lasercommands.laser("COM8",9600,logger.general,logger.lasercomms)
+        ITLA = lasercommands.laser("COM8",general.log,lasercomms.log)
         
         #Set up laser initial parameters
         ITLA.ProbeLaser()
@@ -34,20 +39,24 @@ if __name__ == "__main__":
             time.sleep(10)
         
     except KeyboardInterrupt:
-        logger.general.info("Sequence interupted by user, shutting down laser")
+        general.log.info("Sequence interupted by user, shutting down laser")
         print("Sequence interupted by user, shutting down laser")
-        ITLA.Shutdown()        
-                
-    except SerialException as err:
-        print(err)
+        if 'ITLA' in locals():
+            general.log.info('Shutting down laser')
+            print('Shutting down laser')
+            ITLA.Shutdown()       
 
     except Exception as err:
-        logger.general.info("An unknown error has occured, shutting down laser")
-        logger.general.error(err)
-        print("An unknown error has occured, shutting down laser")
-        ITLA.Shutdown()
-        print(err)  
+        general.log.error(err)
+        print(err)
+        if 'ITLA' in locals():
+            general.log.info('Shutting down laser')
+            print('Shutting down laser')
+            ITLA.Shutdown()
         
     finally:        
-        ITLA.sercon.close()
-        logger.logging.shutdown()
+        if 'ITLA' in locals():
+            ITLA.sercon.close()
+            del ITLA        
+        general.shutdown()
+        lasercomms.shutdown()
