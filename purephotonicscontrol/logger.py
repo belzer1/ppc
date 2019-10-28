@@ -4,7 +4,10 @@ import datetime
 import __main__
 
 class logger:
-    def __init__(self, name, base_path=r"C:\\Users\\lab\\Berrington\\DataLibrary\\"):
+    def __init__(self, name, base_path=""):
+        if base_path == "":
+            usr = os.getlogin()
+            base_path = r"C:\\Users\\" + usr + "\\Berrington\\DataLibrary\\"
         now = datetime.datetime.now()
         path = base_path + now.strftime("%Y\\%m\\%d\\")
         if not os.path.isdir(path):
