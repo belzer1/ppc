@@ -3,33 +3,28 @@ import time
 
 if __name__ == "__main__":  
     try:
-        if 'ITLA' in locals():
-            ITLA.Shutdown()
-            ITLA.sercon.close()
-            del ITLA   
         general = logger.logger('general')
         lasercomms = logger.logger('lasercomms')
-        
-        ITLA = lasercommands.laser("COM8",general.log,lasercomms.log)
+        ITLA = lasercommands.laser("COM4",general.log,lasercomms.log)
         
         #Probe laser and check it's happy
         ITLA.ProbeLaser()
         #Turn laser off before setting frequency is easiest
         ITLA.EnableLaser(False)
         #Set frequency in THz
-        ITLA.SetFrequency(195.93)
+        ITLA.SetFrequency(195.9)      
         #Set power in dBm
-        ITLA.SetPower(13.0)
+        ITLA.SetPower(10.0)
         
         ITLA.EnableLaser(True)
         
         ITLA.EnableWhisperMode(True)
         
-#        time.sleep(100)
+        time.sleep(100)
 #        DO SCIENCE
         
 #        turn laser off (optional)
-#        ITLA.Shutdown()
+        ITLA.Shutdown()
         
     except KeyboardInterrupt:
         general.log.info("Sequence interupted by user, shutting down laser")
@@ -48,5 +43,6 @@ if __name__ == "__main__":
             ITLA.Shutdown()
         
     finally:              
+        ITLA.sercon.close()
         general.shutdown()
         lasercomms.shutdown()

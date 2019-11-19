@@ -4,11 +4,7 @@ from purephotonicscontrol.purephotonicscontrol import lasercommands, logger, cle
 import winsound
     
 if __name__ == "__main__":  
-    try:
-        if 'ITLA' in locals():
-            ITLA.Shutdown()
-            ITLA.sercon.close()
-            del ITLA           
+    try:    
         general = logger.logger('general')
         lasercomms = logger.logger('lasercomms')
         
@@ -67,5 +63,6 @@ if __name__ == "__main__":
             ITLA.Shutdown()
         
     finally:              
+        ITLA.sercon.close()
         general.shutdown()
         lasercomms.shutdown()

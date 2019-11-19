@@ -6,10 +6,6 @@ import winsound
     
 if __name__ == "__main__":  
     try:
-        if 'ITLA' in locals():
-            ITLA.Shutdown()
-            ITLA.sercon.close()
-            del ITLA   
         general = logger.logger('general')
         lasercomms = logger.logger('lasercomms')
         
@@ -19,7 +15,7 @@ if __name__ == "__main__":
         Tektronix_TBS2000.horizontal_scale(1.0)
         Tektronix_TBS2000.single_shot()
         Tektronix_TBS2000.set_scale_3v3("CH1")
-        Tektronix_TBS2000.Tektronix_TBS2000.write("CH1:SCALE 0.250")
+#        Tektronix_TBS2000.Tektronix_TBS2000.write("CH1:SCALE 0.250")
 #        Tektronix_TBS2000.set_scale_3v3("CH2")
         Tektronix_TBS2000.Tektronix_TBS2000.write("TRIGGER:A:EDGE:SOURCE CH1")
         Tektronix_TBS2000.Tektronix_TBS2000.write("TRIGGER:A:LEVEL 4.455")
@@ -27,8 +23,8 @@ if __name__ == "__main__":
         
         
         #Import all the currents/temperatures for the jump sequences
-        jump_setpoints = clean_scan_parameters.Parameters('7.0dBm')
-        jump_setpoints.set_frequency_range(191.5,191.8,0.1)
+        jump_setpoints = clean_scan_parameters.Parameters('10.0dBm')
+        jump_setpoints.set_frequency_range(195.8,196.0,0.1)
         #Connect to laser
         
         ITLA = lasercommands.laser("COM8",general.log,lasercomms.log)
@@ -89,6 +85,7 @@ if __name__ == "__main__":
             print('Shutting down laser')
             ITLA.Shutdown()
         
-    finally:             
+    finally:              
+        ITLA.sercon.close()
         general.shutdown()
         lasercomms.shutdown()
