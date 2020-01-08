@@ -96,7 +96,7 @@ void update_offset() {
   analogWrite(offsetAnalog,laser_offset);
 
   
-  if (abs(laser_offset-2000)<flag_range*10/2){
+  if (laser_offset-2000<0){
     digitalWrite(offsetFlag,HIGH);
   } else {
     digitalWrite(offsetFlag,LOW);
