@@ -745,9 +745,11 @@ class laser:
     
     def SingleSweep(self,scope=False):
         self.EnableSweep(True)
+        self.EnableTeensyMonitor(True)
         previous_freq_offset = 0
         #I record the last four slopes as a kind of bounce avoidance
-        slope_record =  [1,1,1,1,1,1,1,1,1,1]
+        slope_record =  [1,1,1,1,1]
+        
         while True:
             if self.sercon.inWaiting() > 0:
                 slope_record.pop(0)
@@ -759,7 +761,7 @@ class laser:
                 
                 previous_freq_offset = freq_offset
                 
-                if sum(slope_record) == -10: #can be sure it's decreasing
+                if sum(slope_record) == -5: #can be sure it's decreasing
                     if scope!=False:
                         scope.trigger_manually()
                     break
@@ -777,10 +779,11 @@ class laser:
                 
                 previous_freq_offset = freq_offset
                 
-                if sum(slope_record) == 10: #can be sure it's increasing again
+                if sum(slope_record) == 5: #can be sure it's increasing again
                     self.EnableSweep(False)
                     break
             time.sleep(0.00001)
+
         
         # clear anything sent by the teensy that snuck through because of timing mismatch
         time.sleep(1)
@@ -1169,10 +1172,16 @@ class laser:
     ##############################################################################################################
     #   Functions for communicating with Teensy
     ##############################################################################################################
-
-    def LaserMonitorMode(self):        
-        self.Send_command(255,255,255,255)
-        self.general_logger.info("Putting teensy in to monitor mode")
+            
+    def EnableTeensyMonitor(self,state):
+        if state == True:
+            self.Send_command(255,255,255,255)
+            self.general_logger.info("Putting teensy in to monitor mode")
+        else:
+            self.Send_command(254,254,254,254)
+            self.general_logger.info("Taking teensy out of monitor mode")
+            
+    def TeensyReadStatus(self):        
         while True:
             while self.sercon.inWaiting()<4:
                 time.sleep(0.0001)
@@ -1219,7 +1228,8 @@ class laser:
                 self.general_logger.error("Expected register 229, got " + str(byte1))
             scan_status = (byte2 << 8) + byte3
     
-            print("Power {:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Laser {:05.2f} mA, TEC {:05.2f} mA, Offset {:.1f} GHz, Status {}".format(power,laser_temperature,case_temperature,laser_current,TEC_current,offset,scan_status))
+#            print("Power {:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Laser {:05.2f} mA, TEC {:05.2f} mA, Offset {:.1f} GHz, Status {}".format(power,laser_temperature,case_temperature,laser_current,TEC_current,offset,scan_status))
+            return scan_status, offset
         
     
     def SetLoggers(self,general_logger,lasercomms_logger):
