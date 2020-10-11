@@ -470,6 +470,9 @@ class laser:
         """
         
         freq = round((2.99792*10**8/(wavelength*10**-9))*10**-12,4)
+        if not self.min_frequency <= freq <= self.max_frequency:
+            print("Requested frequency is outside this lasers range")
+            return
         #Set THz register
         freqTHz = int(freq)
         THzbyte3 = freqTHz&0xff
@@ -486,8 +489,9 @@ class laser:
         THz = self.SendReceive(READ,REG_Fcf1,0,0)
         GHz = self.SendReceive(READ,REG_Fcf2,0,0)
         if THz == freqTHz and GHz == freqGHz:
-            print('Frequency set to ' + str(freqTHz) + '.' + str(freqGHz) + ' THz')
-            self.general_logger.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
+            freq = freqTHz + freqGHz/10000
+            print('Frequency set to ' + str(freq) +' THz')
+            self.general_logger.info("Laser frequency set to " + str(freq) +" THz")
         else:
             print('Failed to change laser frequency. Laser needs to be turned off')
             self.general_logger.error("Failed to change laser frequency. Laser needs to be turned off")
@@ -521,7 +525,8 @@ class laser:
         THz = self.SendReceive(READ,REG_Fcf1,0,0)
         GHz = self.SendReceive(READ,REG_Fcf2,0,0)
         if THz == freqTHz and GHz == freqGHz:
-            print('Frequency set to ' + str(freqTHz) + '.' + str(freqGHz) + ' THz')
+            freq = freqTHz + freqGHz/10000
+            print('Frequency set to ' + str(freq) +' THz')
             self.general_logger.info("Laser frequency set to " + str(freqTHz) + "." + str(freqGHz) + " THz")
         else:
             print('Failed to change laser frequency. Laser needs to be turned off')
@@ -665,7 +670,7 @@ class laser:
         self.EnableWhisperMode(False)
         self.EnableLaser(False)
         self.sercon.close()
-        self.general_logger.info("Safely shutting down laser and closing serial port")
+        self.general_logger.info("Shutting down laser and closing serial port")
         
     ##############################################################################################################
     #   Functions for the Clean Sweep feature
