@@ -17,7 +17,9 @@ void laser_monitor(){
       probe_current();
       probe_offset();
       probe_scan();
-    } 
+    } else {
+      update_offset();
+    }
   }
 }
 
