@@ -752,13 +752,13 @@ class laser:
         self.EnableSweep(True)
         self.EnableTeensyMonitor(True)
         previous_freq_offset = 0
-        #I record the last four slopes as a kind of bounce avoidance
+        #I record the last five slopes as a kind of bounce avoidance
         slope_record =  [1,1,1,1,1]
         
         while True:
             if self.sercon.inWaiting() > 0:
                 slope_record.pop(0)
-                scan_status, freq_offset = self.TeensyReadStatus()
+                freq_offset = self.TeensyReadOffsets()
                 if freq_offset - previous_freq_offset < 0: #if frequency is decreasing, it is starting full sweep
                     slope_record.append(-1)
                 else:
@@ -771,12 +771,12 @@ class laser:
                         scope.trigger_manually()
                     break
                 
-            time.sleep(0.00001)
+            time.sleep(0.001)
             
         while True:
             if self.sercon.inWaiting() > 0:
                 slope_record.pop(0)
-                scan_status, freq_offset = self.TeensyReadStatus()
+                freq_offset = self.TeensyReadOffsets()
                 if freq_offset - previous_freq_offset > 0: #if frequency is increasing 
                     slope_record.append(1)
                 else:
@@ -787,7 +787,7 @@ class laser:
                 if sum(slope_record) == 5: #can be sure it's increasing again
                     self.EnableSweep(False)
                     break
-            time.sleep(0.00001)
+            time.sleep(0.001)
 
         
         # clear anything sent by the teensy that snuck through because of timing mismatch
@@ -928,14 +928,19 @@ class laser:
         Returns:
             None
         """
+        t0 = time.time()
         while True:
-                    error = self.ReadError()
-                    if abs(error) <= threshold:
-                        print('Locked at a temperature of {} C'.format(self.ReadTemp()))
-                        self.general_logger.info('Locked at a temperature of {} C'.format(self.ReadTemp()))
-                        
-                        break
-                    time.sleep(0.1)
+            error = self.ReadError()
+            if abs(error) <= threshold:
+                print('Locked at a temperature of {} C'.format(self.ReadTemp()))
+                self.general_logger.info('Locked at a temperature of {} C'.format(self.ReadTemp()))
+                
+                break
+            if time.time() - t0 > 30:
+                print('WARNING! Laser failed to lock, continuing anyway')
+                self.general_logger.info('Laser never locked after jump')
+                break
+            time.sleep(0.1)
 
     ##############################################################################################################
     #   Functions for the Clean Scan feature
@@ -1235,6 +1240,21 @@ class laser:
     
 #            print("Power {:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Laser {:05.2f} mA, TEC {:05.2f} mA, Offset {:.1f} GHz, Status {}".format(power,laser_temperature,case_temperature,laser_current,TEC_current,offset,scan_status))
             return scan_status, offset
+        
+    def TeensyReadOffsets(self):        
+        while True:
+            while self.sercon.inWaiting()<4:
+                time.sleep(0.0001)            
+    
+            byte0, byte1, byte2, byte3 = self.Receive_response()
+            if byte1 != 230:
+                print('Error! I expected to read the frequency offset but instead got a response from register ' + str(byte1))
+                self.general_logger.error("Expected register 230, got " + str(byte1))
+            offset = ((byte2 << 8) + byte3 - 2000)*0.1  #encoding for CleanScan
+            offset = (unsigned_to_signed((byte2 << 8) + byte3))*0.1  #encoding for CleanSweep
+    
+#            print("Power {:5.2f} dBm, Chip {:05.2f} C, Case {:05.2f} C, Laser {:05.2f} mA, TEC {:05.2f} mA, Offset {:.1f} GHz, Status {}".format(power,laser_temperature,case_temperature,laser_current,TEC_current,offset,scan_status))
+            return offset
         
     
     def SetLoggers(self,general_logger,lasercomms_logger):

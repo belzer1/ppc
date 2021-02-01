@@ -10,6 +10,7 @@ int ledPin = 13;
 int offsetAnalog = A21;
 int offsetFlag = 37;
 int flag_range = 120; //GHz
+int sweep_range = 0;
 
 void setup() {
 
@@ -39,13 +40,11 @@ void pass_on_to_PC() {
   byte2 = LASER.read();
   byte3 = LASER.read();
 
-  //  PC.print(byte0,HEX);
-  //  PC.print(", ");
-  //  PC.print(byte1,HEX);
-  //  PC.print(", ");
-  //  PC.print(byte2,HEX);
-  //  PC.print(", ");
-  //  PC.println(byte3,HEX);
+  if (byte1 == 228) {
+    //intercept sweep range response
+    sweep_range = (byte2 << 8) + byte3; //in units of GHz
+    sweep_range = sweep_range * 10; //in units of 0.1GHz
+  }
 
   PC.write(byte0);
   PC.write(byte1);
@@ -64,7 +63,6 @@ void pass_on_to_LASER() {
     laser_monitor();
   }
 
-
   LASER.write(byte0);
   LASER.write(byte1);
   LASER.write(byte2);
@@ -72,22 +70,6 @@ void pass_on_to_LASER() {
 }
 
 void update_offset() {
-  //The sequence of bytes needed to read the scan range
-  LASER.write(160);
-  LASER.write(228);
-  LASER.write(0);
-  LASER.write(0);
-
-  wait_for_laser();
-
-  byte0 = LASER.read();
-  byte1 = LASER.read();
-  byte2 = LASER.read();
-  byte3 = LASER.read();
-  int sweep_range = (byte2 << 8) + byte3; //in units of GHz
-  sweep_range = sweep_range*10; //in units of 0.1GHz
-
-  //The sequence of bytes needed to read the frequency offset
   LASER.write(128);
   LASER.write(230);
   LASER.write(0);
@@ -107,32 +89,45 @@ void update_offset() {
     laser_offset = laser_offset - (1 << 16);
   }
 
-  int analog_offset = (laser_offset*3072 + sweep_range*1536)/sweep_range + 512;
+  int analog_offset;
+  if (sweep_range == 0) {
+    analog_offset = 2048;
+  } else {
+    analog_offset = (laser_offset * 3072 + sweep_range * 1536) / sweep_range + 512;
+  }
   //  write result to analog pin for external monitoring
   analogWrite(offsetAnalog, analog_offset); //max is 4096
 
 
-  if (laser_offset - 2000 < 0) {
+  if (laser_offset < 0) {
     digitalWrite(offsetFlag, HIGH);
   } else {
     digitalWrite(offsetFlag, LOW);
   }
 }
-
+long t0;
 void loop() {
-
-  if (LASER.available() >= 4) {
-    pass_on_to_PC();
-  } else if (PC.available() >= 4) {
+  if (PC.available() >= 4) {
     pass_on_to_LASER();
-  }
-  //laser typically takes 10ms to reply
-  //wait 15ms to make sure laser/PC was no serial message, then update analog scan offset
-  delay(15);
-  if (LASER.available() + PC.available() == 0) {
-    update_offset();
+    wait_for_laser();
+    pass_on_to_PC();
   }
 
-  delay(1);
+    if (LASER.available() + PC.available() == 0) {
+      update_offset();
+      delay(1);
+    }
+
+  //  delay(1);
+  //  t0 = micros();
+  //  LASER.write(17);
+  //  LASER.write(288);
+  //  LASER.write(0);
+  //  LASER.write(10);
+  //  wait_for_laser();
+  //  Serial.println(micros()-t0);
+  //  delay(1);
+
+
 
 }

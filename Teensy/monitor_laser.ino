@@ -1,5 +1,5 @@
 unsigned long previousMillis = 0; 
-const long update_period = 500;
+const long update_period = 50;
 
 
 void laser_monitor(){
@@ -12,11 +12,11 @@ void laser_monitor(){
       previousMillis = currentMillis;
   
       // Do a full status check, passing onto PC for each measurement
-      probe_power();
-      probe_temperature();
-      probe_current();
+//      probe_power();
+//      probe_temperature();
+//      probe_current();
       probe_offset();
-      probe_scan();
+//      probe_scan();
     } else {
       update_offset();
     }
