@@ -1,8 +1,14 @@
 import csv 
 import os
-
+from lasercommands import laser
+READ=0
+WRITE=1
+REG_model=0X03
+#user independent path for calibration files 
 script_dir = os.path.dirname(__file__)
-
+model=laser.SendReceive()
+#1. query laser and determine what laser talking to 
+#set up path to calibration files based on laser type
 class Parameters:
     """
     Manages the lasers required currents and temperatures for a given temperature/power
