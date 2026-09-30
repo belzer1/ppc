@@ -7,6 +7,8 @@ class logger:
     def __init__(self, name, base_path=""):
         if base_path == "":
             base_path=Path(input("Enter base path for log files: ")).resolve()
+        else:
+            base_path=Path(base_path)
         now = datetime.datetime.now()
         path = base_path + now.strftime("%Y\\%m\\%d\\")
         if not base_path.is_dir():
