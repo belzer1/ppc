@@ -1,17 +1,16 @@
 import logging
-import os
+import getpass
 import datetime
 import __main__
-
+from pathlib import Path
 class logger:
     def __init__(self, name, base_path=""):
         if base_path == "":
-            usr = os.getlogin()
-            base_path = r"C:\\Users\\" + usr + "\\Berrington\\DataLibrary\\"
+            base_path=Path(input("Enter base path for log files: ")).resolve()
         now = datetime.datetime.now()
         path = base_path + now.strftime("%Y\\%m\\%d\\")
-        if not os.path.isdir(path):
-            os.makedirs(path)
+        if not base_path.is_dir():
+            base_path.mkdir(parents=True, exist_ok=True)
         self.formatter = logging.Formatter("%(asctime)-15s %(levelname)-8s %(message)s")
 
         self.log,self.handler = self.setup_logger(name, path+name+'.log')
@@ -25,7 +24,6 @@ class logger:
         handler = logging.FileHandler(log_file)        
         
         handler.setFormatter(self.formatter)
-
         logger = logging.getLogger(name)
         logger.setLevel(level)
         logger.addHandler(handler)
@@ -36,6 +34,3 @@ class logger:
         self.log.info('Experiment finished\n')
         self.log.removeHandler(self.handler)
         del self.log, self.handler
-
-       
-    #Set up all the logging stuff
