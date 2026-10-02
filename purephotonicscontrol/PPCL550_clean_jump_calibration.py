@@ -12,9 +12,10 @@ REG_FCF2=0x36
 def calibrate_channels(laser,general_log,lasercomms_log,start_freq,stop_freq,power,channels):
     def freq_decomp(freq): 
         import math
-        thz,ghz=math.modf(freq)
-        fcf1,fcf2=thz,ghz*1000
-        return int(fcf1),int(fcf2)
+        ghz,thz=math.modf(freq)
+        fcf1=int(thz)
+        fcf2=int(ghz*1000)
+        return fcf1,fcf2
     def freq_grid(start,stop):
         """
         For PPCL freq spacing must be multiple of 0.050 [50 GHz]
@@ -28,7 +29,6 @@ def calibrate_channels(laser,general_log,lasercomms_log,start_freq,stop_freq,pow
         return np.arange(start, stop, step) 
     channel_freqs=freq_grid(start_freq,stop_freq)
     num_channels=len(channel_freqs)
-    print(num_channels)
     thz_fcf,ghz_fcf=freq_decomp(start_freq)
     #put into bytes 
     thz_byte2=(thz_fcf&0xff00)>>8
@@ -75,12 +75,12 @@ def calibrate_channels(laser,general_log,lasercomms_log,start_freq,stop_freq,pow
     finally:
         if 'ITLA' in locals():
             ITLA.sercon.close()
-        if 'general_log' in locals():
+        if 'general' in locals():
             general_log.info("Laser connection closed.")
-            general_log.close()
-        if 'lasercomms_log' in locals():
-            lasercomms_log.info("Laser connection closed.")
-            lasercomms_log.close()
+            general.shutdown()
+        if 'lasercomms' in locals():
+            lasercomms.info("Laser connection closed.")
+            lasercomms.shutdown()
     return channel_freqs,setpoints,num_channels
 
 def find_port(desc_='str'):
@@ -99,7 +99,7 @@ if __name__=="__main__":
         # port='/dev/cu.usbserial-DK0H8ILT'
         ITLA=lc.laser(port=port,baudrate=9600,log_general=general.log,log_lasercomms=lasercomms.log,com_type='direct')
         laser_model=ITLA.SendReceive(READ,REG_ID,0,0)
-        channel_freqs,setpoints,num_channels=calibrate_channels(laser=ITLA,start_freq=191.5,stop_freq=196.25,power=17.0,channels=100)
+        channel_freqs,setpoints,num_channels=calibrate_channels(laser=ITLA,start_freq=191.5,stop_freq=196.25,power=17.0,channels=100,general_log=general.log,lasercomms_log=lasercomms.log)
         with open(f'calibration_info_{laser_model}.npy', 'wb') as f:
             np.save(f, channel_freqs, allow_pickle=True)
             np.save(f, num_channels, allow_pickle=True)
